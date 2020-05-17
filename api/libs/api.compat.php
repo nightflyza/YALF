@@ -20,7 +20,7 @@ if (!function_exists('__')) {
 if (!function_exists('show_window')) {
 
     /**
-     * Replace for system content output
+     * Replace for system content output for CLI
      * 
      * @param string $title
      * @param string $data

@@ -11,9 +11,6 @@ define('CONFIG_PATH', 'config/');
 include('api/libs/api.compat.php');
 include('api/libs/api.yalfcore.php');
 
-//include('api/libs/api.mysql.php');
-//include('api/libs/api.nyanorm.php');
-
 $yalfCore = new YALFCore();
 $yalfLibs = $yalfCore->getLibs();
 if (!empty($yalfLibs)) {
