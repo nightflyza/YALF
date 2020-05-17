@@ -46,7 +46,12 @@ class YALFCore {
                         $requirements = explode(',', $eachValue);
                         if (!empty($requirements)) {
                             foreach ($requirements as $io => $eachLib) {
-                                $this->loadLibs[self::LIBS_PATH . 'api.' . $eachLib . '.php'] = $eachOption;
+                                $libPath = self::LIBS_PATH . 'api.' . $eachLib . '.php';
+                                if (!file_exists($libPath)) {
+                                    die('Library ' . $libPath . ' required for loading of feature layer ' . $eachOption . ' is not exists!');
+                                } else {
+                                    $this->loadLibs[$libPath] = $eachOption;
+                                }
                             }
                         }
                     }
