@@ -14,5 +14,11 @@ include('api/libs/api.yalfcore.php');
 //include('api/libs/api.mysql.php');
 //include('api/libs/api.nyanorm.php');
 
-$yalfCore=new YALFCore();
+$yalfCore = new YALFCore();
+$yalfLibs = $yalfCore->getLibs();
+if (!empty($yalfLibs)) {
+    foreach ($yalfLibs as $eachLibPath => $eachYalfLayer) {
+        include ($eachLibPath);
+    }
+}
 

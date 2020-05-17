@@ -297,12 +297,12 @@ if (!extension_loaded('mysql')) {
             if (!in_array(mysql_errno(), array(1062, 1065, 1191))) { // Errcodes in array are handled at another way :)
                 if (DEBUG == 1 || $show == 1) {
                     $warning = '<br><b>' . ('MySQL Error') . ':</b><br><i>';
-                    $warning.=mysql_errno() . ' : ' . mysql_error() . (empty($query) ? '</i>' : '<br>In query: <textarea cols="50" rows="7">' . $query . '</textarea></i>');
+                    $warning .= mysql_errno() . ' : ' . mysql_error() . (empty($query) ? '</i>' : '<br>In query: <textarea cols="50" rows="7">' . $query . '</textarea></i>');
                     print($warning) or print($warning);
                 } else {
                     print('An error occured. Please, try again later. Thank You !');
-                    @$message.=mysql_errno() . ':' . mysql_error() . "\r\n";
-                    $message.=(empty($query) ? '' : "In query: \r\n" . $query . "\r\n");
+                    @$message .= mysql_errno() . ':' . mysql_error() . "\r\n";
+                    $message .= (empty($query) ? '' : "In query: \r\n" . $query . "\r\n");
                     die('MySQL error ' . $message);
                 }
             }
@@ -435,42 +435,45 @@ if (!extension_loaded('mysql')) {
     $db = new MySQLDB();
 }
 
-/**
- * Returns cutted down data entry 
- *  Available modes:
- *  1 - digits, letters
- *  2 - only letters
- *  3 - only digits
- *  4 - digits, letters, "-", "_", "."
- *  5 - current lang alphabet + digits + punctuation
- *  default - filter only blacklist chars
- *
- * @param string $data
- * @param int $mode
- * 
- * @return string
- */
-function vf($data, $mode = 0) {
-    switch ($mode) {
-        case 1:
-            return preg_replace("#[^a-z0-9A-Z]#Uis", '', $data); // digits, letters
-            break;
-        case 2:
-            return preg_replace("#[^a-zA-Z]#Uis", '', $data); // letters
-            break;
-        case 3:
-            return preg_replace("#[^0-9]#Uis", '', $data); // digits
-            break;
-        case 4:
-            return preg_replace("#[^a-z0-9A-Z\-_\.]#Uis", '', $data); // digits, letters, "-", "_", "."
-            break;
-        case 5:
-            return preg_replace("#[^ [:punct:]" . ('a-zA-Z') . "0-9]#Uis", '', $data); // current lang alphabet + digits + punctuation
-            break;
-        default:
-            return preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $data); // black list anyway
-            break;
-    }
-}
+if (!function_exists('vf')) {
 
+    /**
+     * Returns cutted down data entry 
+     *  Available modes:
+     *  1 - digits, letters
+     *  2 - only letters
+     *  3 - only digits
+     *  4 - digits, letters, "-", "_", "."
+     *  5 - current lang alphabet + digits + punctuation
+     *  default - filter only blacklist chars
+     *
+     * @param string $data
+     * @param int $mode
+     * 
+     * @return string
+     */
+    function vf($data, $mode = 0) {
+        switch ($mode) {
+            case 1:
+                return preg_replace("#[^a-z0-9A-Z]#Uis", '', $data); // digits, letters
+                break;
+            case 2:
+                return preg_replace("#[^a-zA-Z]#Uis", '', $data); // letters
+                break;
+            case 3:
+                return preg_replace("#[^0-9]#Uis", '', $data); // digits
+                break;
+            case 4:
+                return preg_replace("#[^a-z0-9A-Z\-_\.]#Uis", '', $data); // digits, letters, "-", "_", "."
+                break;
+            case 5:
+                return preg_replace("#[^ [:punct:]" . ('a-zA-Z') . "0-9]#Uis", '', $data); // current lang alphabet + digits + punctuation
+                break;
+            default:
+                return preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $data); // black list anyway
+                break;
+        }
+    }
+
+}
 ?>

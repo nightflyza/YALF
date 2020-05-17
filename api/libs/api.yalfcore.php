@@ -10,13 +10,14 @@ class YALFCore {
     protected $config = array();
 
     /**
-     * Contains names of libs to load
+     * Contains names of libs to load as path=>layer
      *
      * @var array
      */
     protected $loadLibs = array();
 
     const YALF_CONF_PATH = 'config/yalf.ini';
+    const LIBS_PATH = 'api/libs/';
 
     public function __construct() {
         $this->loadConfig();
@@ -38,16 +39,29 @@ class YALFCore {
      * @return void
      */
     protected function setOptions() {
-        if (isset($this->config['LOAD_LIBS'])) {
-            if (!empty($this->config['LOAD_LIBS'])) {
-                $libsTmp = explode(',', $this->config['LOAD_LIBS']);
-                if (!empty($libsTmp)) {
-                    foreach ($libsTmp as $io => $name) {
-                        $this->loadLibs[$name] = $io;
+        if (!empty($this->config)) {
+            foreach ($this->config as $eachOption => $eachValue) {
+                if (ispos($eachOption, 'LAYER_')) {
+                    if (!empty($eachValue)) {
+                        $requirements = explode(',', $eachValue);
+                        if (!empty($requirements)) {
+                            foreach ($requirements as $io => $eachLib) {
+                                $this->loadLibs[self::LIBS_PATH . 'api.' . $eachLib . '.php'] = $eachOption;
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Returns array of libs required for loading layers
+     * 
+     * @return array
+     */
+    public function getLibs() {
+        return($this->loadLibs);
     }
 
 }
