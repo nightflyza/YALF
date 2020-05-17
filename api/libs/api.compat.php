@@ -168,3 +168,45 @@ function rcms_parse_ini_file($filename, $blocks = false) {
     }
     return (!empty($array2)) ? $array2 : false;
 }
+
+if (!function_exists('vf')) {
+
+    /**
+     * Returns cutted down data entry 
+     *  Available modes:
+     *  1 - digits, letters
+     *  2 - only letters
+     *  3 - only digits
+     *  4 - digits, letters, "-", "_", "."
+     *  5 - current lang alphabet + digits + punctuation
+     *  default - filter only blacklist chars
+     *
+     * @param string $data
+     * @param int $mode
+     * 
+     * @return string
+     */
+    function vf($data, $mode = 0) {
+        switch ($mode) {
+            case 1:
+                return preg_replace("#[^a-z0-9A-Z]#Uis", '', $data); // digits, letters
+                break;
+            case 2:
+                return preg_replace("#[^a-zA-Z]#Uis", '', $data); // letters
+                break;
+            case 3:
+                return preg_replace("#[^0-9]#Uis", '', $data); // digits
+                break;
+            case 4:
+                return preg_replace("#[^a-z0-9A-Z\-_\.]#Uis", '', $data); // digits, letters, "-", "_", "."
+                break;
+            case 5:
+                return preg_replace("#[^ [:punct:]" . ('a-zA-Z') . "0-9]#Uis", '', $data); // current lang alphabet + digits + punctuation
+                break;
+            default:
+                return preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $data); // black list anyway
+                break;
+        }
+    }
+
+}
