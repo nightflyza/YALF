@@ -1,3 +1,3 @@
 <?php
 
-show_window('test title', 'test datazzzzzzzzz');
+show_window('Just a test module', 'subj');

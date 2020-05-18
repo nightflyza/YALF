@@ -20,16 +20,18 @@ if (!function_exists('show_window')) {
 
 }
 
+function show_error($data) {
+    return show_window('Error', $data);
+}
 
-if (!function_exists('show_error')) {
+function show_warning($data) {
+    return show_window('Warning', $data);
+}
 
-    /**
-     * Shows default error notice
-     * 
-     * @param string $data
-     */
-    function show_error($data) {
-        show_window('Error', $data);
-    }
+function show_success($data) {
+    return show_window('Success', $data);
+}
 
+function show_info($data) {
+    return show_window('Info', $data);
 }

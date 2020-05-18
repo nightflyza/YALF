@@ -17,6 +17,17 @@ if (!function_exists('__')) {
 
 }
 
+if (!function_exists('cfr')) {
+
+    /**
+     * dummy rights system replacement
+     */
+    function cfr($right) {
+        return(true);
+    }
+
+}
+
 /**
  * Dummy rcms localisation function
  * 
@@ -27,7 +38,6 @@ if (!function_exists('__')) {
 function rcms_date_localise($str) {
     return($str);
 }
-
 
 if (!function_exists('curdatetime')) {
 
@@ -282,8 +292,6 @@ function curyear() {
     return($currentyear);
 }
 
-
-
 /**
  * Returns all months with names in two digit notation
  * 
@@ -351,4 +359,36 @@ function web_bar($count, $total) {
 
     $code = wf_img_sized($barurl, '', $width . '%', '14');
     return($code);
+}
+
+
+
+/**
+ * Calculates percent value
+ * 
+ * @param float $sum
+ * @param float $percent
+ * 
+ * @return float
+ */
+function zb_Percent($sum, $percent) {
+    // и не надо ржать, я реально не могу запомнить чего куда делить и умножать
+    $result = $percent / 100 * $sum;
+    return ($result);
+}
+
+/**
+ * Counts percentage between two values
+ * 
+ * @param float $valueTotal
+ * @param float $value
+ * 
+ * @return float
+ */
+function zb_PercentValue($valueTotal, $value) {
+    $result = 0;
+    if ($valueTotal != 0) {
+        $result = round((($value * 100) / $valueTotal), 2);
+    }
+    return ($result);
 }

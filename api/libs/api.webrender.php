@@ -1,6 +1,6 @@
 <?php
 
-
+$contentContainer = '';
 
 /**
  * Shows data in primary content container
@@ -18,7 +18,7 @@ function show_window($title, $data, $align = 'left') {
         <td><h2>' . @$title . '</h2></td>
         </tr>
         <tr>
-        <td valign="top">
+        <td valign="top" align="' . $align . '">
         ' . @$data . '
         </td>
         </tr>
@@ -27,16 +27,18 @@ function show_window($title, $data, $align = 'left') {
     $contentContainer = $contentContainer . $window_content;
 }
 
+function show_error($data) {
+    return show_window('', '<span class="alert_error">' . $data . '</span>', 'center');
+}
 
-if (!function_exists('show_error')) {
+function show_warning($data) {
+    return show_window('', '<span class="alert_warning">' . $data . '</span>', 'center');
+}
 
-    /**
-     * Shows default error notice
-     * 
-     * @param string $data
-     */
-    function show_error($data) {
-        show_window('Error', $data);
-    }
+function show_success($data) {
+    return show_window('', '<span class="alert_success">' . $data . '</span>', 'center');
+}
 
+function show_info($data) {
+    return show_window('', '<span class="alert_info">' . $data . '</span>', 'center');
 }

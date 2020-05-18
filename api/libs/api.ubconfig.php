@@ -41,8 +41,7 @@ class UbillingConfig {
      * @return parametr from alter.ini or FALSE if parameter not defined
      */
     public function getAlterParam($param = false) {
-        return ($param and isset($this->alterCfg[$param]))
-            ? $this->alterCfg[$param] : false ;
+        return ($param and isset($this->alterCfg[$param])) ? $this->alterCfg[$param] : false;
     }
 
     /**
@@ -169,4 +168,5 @@ class UbillingMessageHelper {
 
 }
 
+$ubillingConfig = new UbillingConfig();
 ?>
