@@ -17,24 +17,15 @@ if (!function_exists('__')) {
 
 }
 
-if (!function_exists('show_window')) {
-
-    /**
-     * Replace for system content output for CLI
-     * 
-     * @param string $title
-     * @param string $data
-     * @param string $align
-     */
-    function show_window($title, $data, $align = "left") {
-        $result = '';
-        if (!empty($title)) {
-            $result = $title . "\n";
-        }
-        $result .= $data . "\n";
-        print($result);
-    }
-
+/**
+ * Dummy rcms localisation function
+ * 
+ * @param string $str
+ * 
+ * @return string
+ */
+function rcms_date_localise($str) {
+    return($str);
 }
 
 
@@ -209,4 +200,155 @@ if (!function_exists('vf')) {
         }
     }
 
+}
+
+/**
+ * Fast debug text data output
+ * 
+ * @param string $data
+ */
+function deb($data) {
+    show_window('DEBUG', $data);
+}
+
+/**
+ * Fast debug output of array
+ * 
+ * @param string $data
+ */
+function debarr($data) {
+    $result = print_r($data, true);
+    $result = '<pre>' . $result . '</pre>';
+    show_window('DEBUG', $result);
+}
+
+/**
+ * Returns current date and time in mysql DATETIME view
+ * 
+ * @return string
+ */
+function curdatetime() {
+    $currenttime = date("Y-m-d H:i:s");
+    return($currenttime);
+}
+
+/**
+ * returns current time in mysql DATETIME view
+ * 
+ * @return string
+ */
+function curtime() {
+    $currenttime = date("H:i:s");
+    return($currenttime);
+}
+
+/**
+ * Returns current date in mysql DATETIME view
+ * 
+ * @return string
+ */
+function curdate() {
+    $currentdate = date("Y-m-d");
+    return($currentdate);
+}
+
+/**
+ * Returns current year-month in mysql DATETIME view
+ * 
+ * @return string
+ */
+function curmonth() {
+    $currentmonth = date("Y-m");
+    return($currentmonth);
+}
+
+/**
+ * Returns previous year-month in mysql DATETIME view
+ * 
+ * @return string
+ */
+function prevmonth() {
+    $result = date("Y-m", strtotime("-1 months"));
+    return ($result);
+}
+
+/**
+ * Returns current year as just Y
+ * 
+ * @return string
+ */
+function curyear() {
+    $currentyear = date("Y");
+    return($currentyear);
+}
+
+
+
+/**
+ * Returns all months with names in two digit notation
+ * 
+ * @param string $number
+ * @return array/string
+ */
+function months_array($number = null) {
+    $months = array(
+        '01' => 'January',
+        '02' => 'February',
+        '03' => 'March',
+        '04' => 'April',
+        '05' => 'May',
+        '06' => 'June',
+        '07' => 'July',
+        '08' => 'August',
+        '09' => 'September',
+        '10' => 'October',
+        '11' => 'November',
+        '12' => 'December'
+    );
+    if (empty($number)) {
+        return $months;
+    } else {
+        return $months[$number];
+    }
+}
+
+/**
+ * Retuns all months with names without begin zeros
+ * 
+ * @return array
+ */
+function months_array_wz() {
+    $months = array(
+        '1' => 'January',
+        '2' => 'February',
+        '3' => 'March',
+        '4' => 'April',
+        '5' => 'May',
+        '6' => 'June',
+        '7' => 'July',
+        '8' => 'August',
+        '9' => 'September',
+        '10' => 'October',
+        '11' => 'November',
+        '12' => 'December');
+    return($months);
+}
+
+/**
+ * Returns visual bar with count/total proportional size
+ * 
+ * @param float $count
+ * @param float $total
+ * @return string
+ */
+function web_bar($count, $total) {
+    $barurl = 'skins/bar.png';
+    if ($total != 0) {
+        $width = ($count / $total) * 100;
+    } else {
+        $width = 0;
+    }
+
+    $code = wf_img_sized($barurl, '', $width . '%', '14');
+    return($code);
 }

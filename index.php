@@ -10,3 +10,7 @@ define('MODULES_PATH', 'modules/general/');
 
 include ('api/autoloader.php');
 include ($yalfCore->getIndexModulePath());
+
+if ($yalfCore->getRenderer() == 'WEB') {
+    require_once($yalfCore->getSkinPath() . $yalfCore::SKIN_TEMPLATE_NAME);
+}

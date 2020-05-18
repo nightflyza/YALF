@@ -1,3 +1,3 @@
 <?php
 
-print('test module is here');
+show_window('test title', 'test datazzzzzzzzz');

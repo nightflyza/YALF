@@ -24,12 +24,28 @@ class YALFCore {
     protected $indexModule = 'index';
 
     /**
+     * Current skin name
+     *
+     * @var string
+     */
+    protected $skin = 'paper';
+
+    /**
+     * Application renderer type. Can be WEB/CLI at this moment
+     *
+     * @var string
+     */
+    protected $renderer = 'WEB';
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
     const LIBS_PATH = 'api/libs/';
     const MODULE_CODE_NAME = 'index.php';
     const ROUTE_MODULE_LOAD = 'module';
+    const SKINS_PATH = 'skins/';
+    const SKIN_TEMPLATE_NAME = 'template.html';
 
     public function __construct() {
         $this->loadConfig();
@@ -106,6 +122,25 @@ class YALFCore {
                 }
             }
         }
+
+        //template selection
+        if (isset($this->config['YALF_SKIN'])) {
+            if (!empty($this->config['YALF_SKIN'])) {
+                $this->skin = $this->config['YALF_SKIN'];
+                if (!file_exists(self::SKINS_PATH . $this->skin . '/' . self::SKIN_TEMPLATE_NAME)) {
+                    die('Template code not found ' . self::SKINS_PATH . $this->skin . '/' . self::SKIN_TEMPLATE_NAME . ' set in YALF_SKIN');
+                }
+            }
+        }
+
+        //renderer type detection
+        if (isset($this->config['LAYER_CLIRENDER'])) {
+            $this->renderer = 'CLI';
+        }
+
+        if (isset($this->config['LAYER_WEBRENDER'])) {
+            $this->renderer = 'WEB';
+        }
     }
 
     /**
@@ -142,6 +177,56 @@ class YALFCore {
      */
     public function getIndexModulePath() {
         return(MODULES_PATH . $this->indexModule . '/' . self::MODULE_CODE_NAME);
+    }
+
+    /**
+     * Returns current skin path
+     * 
+     * @return string
+     */
+    public function getSkinPath() {
+        return(self::SKINS_PATH . '/' . $this->skin . '/');
+    }
+
+    /**
+     * Returns current application renderer type
+     * 
+     * @return string
+     */
+    public function getRenderer() {
+        return($this->renderer);
+    }
+
+    /**
+     * Returns ISP logo image code
+     * 
+     * @return string
+     */
+    public function renderLogo() {
+
+        $result = '';
+        if (isset($this->config['YALF_LOGO'])) {
+            if ((!empty($this->config['YALF_APP'])) AND ( !empty($this->config['YALF_URL'])) AND ( (!empty($this->config['YALF_LOGO'])))) {
+                $rawUrl = strtolower($this->config['YALF_URL']);
+                if (stripos($rawUrl, 'http') === false) {
+                    $rawUrl = 'http://' . $rawUrl;
+                } else {
+                    $rawUrl = $rawUrl;
+                }
+                $result = '<a href="' . $rawUrl . '" target="_BLANK"><img src="' . $this->config['YALF_LOGO'] . '" title="' . $this->config['YALF_APP'] . '"></a>';
+            }
+        }
+        return ($result);
+    }
+
+    /**
+     * Renders application menu
+     * 
+     * @return string
+     */
+    public function renderMenu() {
+        $result = '';
+        return($result);
     }
 
 }
