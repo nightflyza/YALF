@@ -1,11 +1,6 @@
 <?php
 
 /**
- * rcms-like commons consts defines
- */
-define('CONFIG_PATH', 'config/');
-
-/**
  * Including all needed APIs and Libs
  */
 include('api/libs/api.compat.php');
