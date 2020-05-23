@@ -12,9 +12,9 @@ if (!function_exists('show_window')) {
     function show_window($title, $data, $align = 'left') {
         $result = '';
         if (!empty($title)) {
-            $result = $title . "\n";
+            $result = $title . PHP_EOL;
         }
-        $result .= $data . "\n";
+        $result .= $data . PHP_EOL;
         print($result);
     }
 
