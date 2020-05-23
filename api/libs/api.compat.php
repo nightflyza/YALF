@@ -12,6 +12,10 @@ if (!function_exists('__')) {
      * @return string
      */
     function __($str) {
+        global $lang;
+        if (isset($lang['def'][$str])) {
+            $str = $lang['def'][$str];
+        }
         return($str);
     }
 
@@ -360,8 +364,6 @@ function web_bar($count, $total) {
     $code = wf_img_sized($barurl, '', $width . '%', '14');
     return($code);
 }
-
-
 
 /**
  * Calculates percent value

@@ -31,6 +31,13 @@ class YALFCore {
     protected $skin = 'paper';
 
     /**
+     * Default language name
+     *
+     * @var string
+     */
+    protected $language = 'english';
+
+    /**
      * Application renderer type. Can be WEB/CLI at this moment
      *
      * @var string
@@ -42,6 +49,7 @@ class YALFCore {
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
     const LIBS_PATH = 'api/libs/';
+    const LANG_PATH = 'languages/';
     const MODULE_CODE_NAME = 'index.php';
     const ROUTE_MODULE_LOAD = 'module';
     const SKINS_PATH = 'skins/';
@@ -133,6 +141,13 @@ class YALFCore {
             }
         }
 
+        //locale selection
+        if (isset($this->config['YALF_LANG'])) {
+            if (!empty($this->config['YALF_LANG'])) {
+                $this->language = $this->config['YALF_LANG'];
+            }
+        }
+
         //renderer type detection
         if (isset($this->config['LAYER_CLIRENDER'])) {
             $this->renderer = 'CLI';
@@ -177,6 +192,15 @@ class YALFCore {
      */
     public function getIndexModulePath() {
         return(MODULES_PATH . $this->indexModule . '/' . self::MODULE_CODE_NAME);
+    }
+
+    /**
+     * Returns current locale language full path
+     * 
+     * @return string
+     */
+    public function getLangPath() {
+        return(self::LANG_PATH . $this->language . '/');
     }
 
     /**
