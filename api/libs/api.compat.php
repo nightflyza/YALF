@@ -47,6 +47,17 @@ function rcms_date_localise($str) {
     return($str);
 }
 
+/**
+ * Returns current locale as two-letters code extracted form YalfCore
+ * 
+ * @return string
+ */
+function curlang() {
+    global $yalfCore;
+    $locale=$yalfCore->getCurLang();
+    return($locale);
+}
+
 if (!function_exists('curdatetime')) {
 
     /**

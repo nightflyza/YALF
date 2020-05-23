@@ -17,6 +17,12 @@
         <!-- Ubilling custom styles -->
         <link href="<?=$yalfCore->getSkinPath(); ?>assets/css/ubilling.css" rel="stylesheet" />
         <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/core/jquery.min.js"></script>
+        <!-- JQDT  -->
+        <style type="text/css" title="currentStyle">
+            @import "modules/jsc/dt3/css/jquery.dataTables_themeroller.css";
+            @import "modules/jsc/dt3/css/jquery.dataTables.ub.css";
+        </style>
+        <script type="text/javascript" src="modules/jsc/dt3/datatables.min.js"></script>
     </head>
 
     <body class="">
@@ -78,13 +84,13 @@
                             </nav>
                             <div class="credits ml-auto">
                                 <span class="copyright">
-                                <?php
-                                // Page generation time end
-                                $mtime = explode(' ', microtime());
-                                $totaltime = $mtime[0] + $mtime[1] - $starttime;
-                                print(__('GT:') . round($totaltime, 3));
-                                print(' QC: ' . $query_counter);
-                                ?>
+                                    <?php
+                                    // Page generation time end
+                                    $mtime = explode(' ', microtime());
+                                    $totaltime = $mtime[0] + $mtime[1] - $starttime;
+                                    print(__('GT:') . round($totaltime, 3));
+                                    print(' QC: ' . $query_counter);
+                                    ?>
                                 </span>
                             </div>
                         </div>

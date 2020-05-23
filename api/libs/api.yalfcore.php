@@ -204,6 +204,15 @@ class YALFCore {
     }
 
     /**
+     * Returns current locale ID as two-letters code
+     * 
+     * @return string
+     */
+    public function getCurLang() {
+        return(substr($this->language, 0, '2'));
+    }
+
+    /**
      * Returns current skin path
      * 
      * @return string
