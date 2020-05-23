@@ -40,6 +40,10 @@ if (!function_exists('cfr')) {
  * @return string
  */
 function rcms_date_localise($str) {
+    global $lang;
+    if (isset($lang['datetime'][$str])) {
+        $str = $lang['datetime'][$str];
+    }
     return($str);
 }
 

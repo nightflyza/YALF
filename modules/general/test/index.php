@@ -2,4 +2,4 @@
 
 show_window('Just a test module', 'subj');
 
-show_window(__('Recovered'), __('right to view COVID-19 cases'));
+debarr(wf_MonthSelector('12w3r4', __('Month')));;
