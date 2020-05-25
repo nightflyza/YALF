@@ -1,0 +1,20 @@
+language: php
+
+dist: trusty
+
+php:
+  - 5.5
+  - 7.0
+  - 7.1
+  - 7.2
+  - 7.3
+  - 7.4
+
+script: if find . -name "*.php" -exec php -l {} 2>&1 \; | grep "syntax error, unexpected"; then exit 1; fi
+
+branches:
+  only:
+    - "master"
+
+notifications:
+  email: info@ubilling.net.ua
