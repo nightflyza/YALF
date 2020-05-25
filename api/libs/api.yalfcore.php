@@ -76,7 +76,7 @@ class YALFCore {
      * @return void
      */
     protected function loadConfig() {
-        $this->config = rcms_parse_ini_file(self::YALF_CONF_PATH);
+        $this->config = parse_ini_file(self::YALF_CONF_PATH);
     }
 
     /**
@@ -297,13 +297,14 @@ class YALFCore {
         $result = '';
 
         if (file_exists(self::YALF_MENU_PATH)) {
-            $rawData = rcms_parse_ini_file(self::YALF_MENU_PATH, true);
+            $rawData = parse_ini_file(self::YALF_MENU_PATH, true);
             if (!empty($rawData)) {
-                foreach ($rawData as $io => $each) {
+                foreach ($rawData as $section => $each) {
                     $icon = (!empty($each['ICON'])) ? $each['ICON'] : self::DEFAULT_ICON;
                     $icon = self::MENU_ICONS_PATH . $icon;
                     $name = __($each['NAME']);
-                    $result .= wf_tag('li', false) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
+                    $actClass = (isset($_GET[self::ROUTE_MODULE_LOAD]) AND $_GET[self::ROUTE_MODULE_LOAD] == $section) ? 'active' : '';
+                    $result .= wf_tag('li', false, $actClass) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
                 }
             }
         }
