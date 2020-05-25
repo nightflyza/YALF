@@ -61,6 +61,7 @@ class YALFCore {
     const MODULE_CODE_NAME = 'index.php';
     const ROUTE_MODULE_LOAD = 'module';
     const SKINS_PATH = 'skins/';
+    const MENU_ICONS_PATH = 'skins/menuicons/';
     const SKIN_TEMPLATE_NAME = 'template.html';
 
     public function __construct() {
@@ -294,8 +295,17 @@ class YALFCore {
      */
     public function renderMenu() {
         $result = '';
+
         if (file_exists(self::YALF_MENU_PATH)) {
-            $menuData= rcms_parse_ini_file(self::YALF_MENU_PATH,true);
+            $rawData = rcms_parse_ini_file(self::YALF_MENU_PATH, true);
+            if (!empty($rawData)) {
+                foreach ($rawData as $io => $each) {
+                    $icon = (!empty($each['ICON'])) ? $each['ICON'] : self::DEFAULT_ICON;
+                    $icon = self::MENU_ICONS_PATH . $icon;
+                    $name = __($each['NAME']);
+                    $result .= wf_tag('li', false) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
+                }
+            }
         }
         return($result);
     }
