@@ -211,6 +211,15 @@ class YALFCore {
     }
 
     /**
+     * Returns current module name
+     * 
+     * @return string
+     */
+    public function getCurrentModuleName() {
+        return($this->indexModule);
+    }
+
+    /**
      * Returns current locale language full path
      * 
      * @return string
@@ -303,7 +312,7 @@ class YALFCore {
                     $icon = (!empty($each['ICON'])) ? $each['ICON'] : self::DEFAULT_ICON;
                     $icon = self::MENU_ICONS_PATH . $icon;
                     $name = __($each['NAME']);
-                    $actClass = (isset($_GET[self::ROUTE_MODULE_LOAD]) AND $_GET[self::ROUTE_MODULE_LOAD] == $section) ? 'active' : '';
+                    $actClass = ($this->getCurrentModuleName() == $section) ? 'active' : '';
                     $result .= wf_tag('li', false, $actClass) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
                 }
             }
