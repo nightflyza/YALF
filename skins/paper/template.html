@@ -6,7 +6,7 @@
         <link rel="apple-touch-icon" sizes="76x76" href="<?=$yalfCore->getSkinPath(); ?>assets/img/apple-icon.png">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
         <title>
-            <?=__('YALF default template') ?>
+            <?=__($yalfCore->getPageTitle()); ?>
         </title>
         <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
         <!--     Fonts and icons     -->
@@ -52,7 +52,7 @@
                                     <span class="navbar-toggler-bar bar3"></span>
                                 </button>
                             </div>
-                            <a class="navbar-brand" href="index.php"><?=__('Page title here') ?></a>
+                            <a class="navbar-brand" href="index.php"><?=__($yalfCore->getPageTitle()); ?></a>
                         </div>
 
                         <div class="collapse navbar-collapse justify-content-end" id="navigation">

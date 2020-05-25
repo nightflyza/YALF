@@ -45,9 +45,17 @@ class YALFCore {
     protected $renderer = 'WEB';
 
     /**
+     * Contains page title here
+     *
+     * @var string
+     */
+    protected $pageTitle = '';
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
+    const YALF_MENU_PATH = 'config/globalmenu.ini';
     const LIBS_PATH = 'api/libs/';
     const LANG_PATH = 'languages/';
     const MODULE_CODE_NAME = 'index.php';
@@ -148,6 +156,13 @@ class YALFCore {
             }
         }
 
+        //page title setup
+        if (isset($this->config['YALF_TITLE'])) {
+            if (!empty($this->config['YALF_TITLE'])) {
+                $this->pageTitle = $this->config['YALF_TITLE'];
+            }
+        }
+
         //renderer type detection
         if (isset($this->config['LAYER_CLIRENDER'])) {
             $this->renderer = 'CLI';
@@ -231,6 +246,26 @@ class YALFCore {
     }
 
     /**
+     * Returns current application page title
+     * 
+     * @return string
+     */
+    public function getPageTitle() {
+        return($this->pageTitle);
+    }
+
+    /**
+     * Sets current page title text
+     * 
+     * @param string $title
+     * 
+     * @return void
+     */
+    public function setPageTitle($title = '') {
+        $this->pageTitle = $title;
+    }
+
+    /**
      * Returns ISP logo image code
      * 
      * @return string
@@ -246,7 +281,7 @@ class YALFCore {
                 } else {
                     $rawUrl = $rawUrl;
                 }
-                $result = '<a href="' . $rawUrl . '" target="_BLANK"><img src="' . $this->config['YALF_LOGO'] . '" title="' . $this->config['YALF_APP'] . '"></a>';
+                $result = '<a href="' . $rawUrl . '" target="_BLANK"><img src="' . $this->config['YALF_LOGO'] . '" title="' . __($this->config['YALF_APP']) . '"></a>';
             }
         }
         return ($result);
@@ -259,6 +294,9 @@ class YALFCore {
      */
     public function renderMenu() {
         $result = '';
+        if (file_exists(self::YALF_MENU_PATH)) {
+            $menuData= rcms_parse_ini_file(self::YALF_MENU_PATH,true);
+        }
         return($result);
     }
 
