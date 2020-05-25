@@ -1,6 +1,17 @@
 <?php
 
 error_reporting(E_ALL);
+
+//set to 1 for enable profiling
+define('XHPROF', 0);
+
+if (XHPROF) {
+    define("XHPROF_ROOT", __DIR__ . '/xhprof');
+    require_once (XHPROF_ROOT . '/xhprof_lib/utils/xhprof_lib.php');
+    require_once (XHPROF_ROOT . '/xhprof_lib/utils/xhprof_runs.php');
+    xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
+}
+
 /**
  * Default headers
  */
@@ -24,7 +35,17 @@ define('MODULES_PATH', 'modules/general/');
 require_once('api/autoloader.php');
 require_once($yalfCore->getIndexModulePath());
 
+
+if (XHPROF) {
+    $xhprof_data = xhprof_disable();
+    $xhprof_runs = new XHProfRuns_Default();
+    $xhprof_run_id = $xhprof_runs->save_run($xhprof_data, "xhprof_yalf");
+    $xhprof_link = wf_modal('XHPROF', 'XHPROF DEBUG DATA', '<iframe src="xhprof/xhprof_html/index.php?run=' . $xhprof_run_id . '&source=xhprof_yalf" width="100%" height="750"></iframe>', '', '1024', '768');
+}
+
+
 //web based renderer template load
 if ($yalfCore->getRenderer() == 'WEB') {
     require_once($yalfCore->getSkinPath() . $yalfCore::SKIN_TEMPLATE_NAME);
 }
+
