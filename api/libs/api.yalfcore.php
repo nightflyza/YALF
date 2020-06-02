@@ -52,6 +52,13 @@ class YALFCore {
     protected $pageTitle = '';
 
     /**
+     * Is global menu rendering enabled flag
+     *
+     * @var bool
+     */
+    protected $globalMenuEnabled = false;
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
@@ -161,6 +168,13 @@ class YALFCore {
         if (isset($this->config['YALF_TITLE'])) {
             if (!empty($this->config['YALF_TITLE'])) {
                 $this->pageTitle = $this->config['YALF_TITLE'];
+            }
+        }
+
+        //global menu rendering flag setup
+        if (isset($this->config['YALF_MENU_ENABLED'])) {
+            if ($this->config['YALF_MENU_ENABLED']) {
+                $this->globalMenuEnabled = true;
             }
         }
 
@@ -304,20 +318,30 @@ class YALFCore {
      */
     public function renderMenu() {
         $result = '';
-
-        if (file_exists(self::YALF_MENU_PATH)) {
-            $rawData = parse_ini_file(self::YALF_MENU_PATH, true);
-            if (!empty($rawData)) {
-                foreach ($rawData as $section => $each) {
-                    $icon = (!empty($each['ICON'])) ? $each['ICON'] : self::DEFAULT_ICON;
-                    $icon = self::MENU_ICONS_PATH . $icon;
-                    $name = __($each['NAME']);
-                    $actClass = ($this->getCurrentModuleName() == $section) ? 'active' : '';
-                    $result .= wf_tag('li', false, $actClass) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
+        if ($this->globalMenuEnabled) {
+            if (file_exists(self::YALF_MENU_PATH)) {
+                $rawData = parse_ini_file(self::YALF_MENU_PATH, true);
+                if (!empty($rawData)) {
+                    foreach ($rawData as $section => $each) {
+                        $icon = (!empty($each['ICON'])) ? $each['ICON'] : self::DEFAULT_ICON;
+                        $icon = self::MENU_ICONS_PATH . $icon;
+                        $name = __($each['NAME']);
+                        $actClass = ($this->getCurrentModuleName() == $section) ? 'active' : '';
+                        $result .= wf_tag('li', false, $actClass) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
+                    }
                 }
             }
         }
         return($result);
+    }
+
+    /**
+     * Returns global menu enable state flag
+     * 
+     * @return bool
+     */
+    public function getGlobalMenuFlag() {
+        return($this->globalMenuEnabled);
     }
 
 }
