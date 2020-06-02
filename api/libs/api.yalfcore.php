@@ -257,7 +257,7 @@ class YALFCore {
      * @return string
      */
     public function getSkinPath() {
-        return(self::SKINS_PATH . '/' . $this->skin . '/');
+        return(self::SKINS_PATH  . $this->skin . '/');
     }
 
     /**
