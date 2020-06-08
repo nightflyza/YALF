@@ -9,6 +9,7 @@ if (XHPROF) {
     define("XHPROF_ROOT", __DIR__ . '/xhprof');
     require_once (XHPROF_ROOT . '/xhprof_lib/utils/xhprof_lib.php');
     require_once (XHPROF_ROOT . '/xhprof_lib/utils/xhprof_runs.php');
+    //append XHPROF_FLAGS_NO_BUILTINS if your PHP instance crashes
     xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
 }
 
