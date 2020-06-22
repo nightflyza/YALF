@@ -5,8 +5,23 @@ error_reporting(E_ALL);
 //set to 1 for enable profiling
 define('XHPROF', 0);
 
+/**
+ * rcms-like commons consts defines
+ */
+define('CONFIG_PATH', 'config/');
+define('MODULES_PATH', 'modules/general/');
+
+/**
+ * Profiler init
+ */
 if (XHPROF) {
-    define("XHPROF_ROOT", __DIR__ . '/xhprof');
+    $yalfConf = parse_ini_file(CONFIG_PATH . 'yalf.ini');
+    if ($yalfConf['XHPROF_PATH']) {
+        $xhProfLibsPath = $yalfConf['XHPROF_PATH'];
+    } else {
+        $xhProfLibsPath = 'xhprof';
+    }
+    define("XHPROF_ROOT", __DIR__ . '/' . $xhProfLibsPath);
     require_once (XHPROF_ROOT . '/xhprof_lib/utils/xhprof_lib.php');
     require_once (XHPROF_ROOT . '/xhprof_lib/utils/xhprof_runs.php');
     //append XHPROF_FLAGS_NO_BUILTINS if your PHP instance crashes
@@ -27,11 +42,8 @@ header("Pragma: no-cache");
 $starttime = explode(' ', microtime());
 $starttime = $starttime[1] + $starttime[0];
 $query_counter = 0;
-/**
- * rcms-like commons consts defines
- */
-define('CONFIG_PATH', 'config/');
-define('MODULES_PATH', 'modules/general/');
+
+
 
 require_once('api/autoloader.php');
 require_once($yalfCore->getIndexModulePath());
