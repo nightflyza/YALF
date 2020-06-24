@@ -503,6 +503,133 @@ class UbillingTelegram {
         }
     }
 
+    /**
+     * Sets HTTPS web hook URL for some bot
+     * 
+     * @param string $webHookUrl HTTPS url to send updates to. Use an empty string to remove webhook integration
+     * @param int $maxConnections Maximum allowed number of simultaneous HTTPS connections to the webhook for update delivery, 1-100. Defaults to 40.
+     * 
+     * @return string
+     */
+    public function setWebHook($webHookUrl, $maxConnections = 40) {
+        $result = '';
+        if (!empty($this->botToken)) {
+            $data = array();
+            if (!empty($webHookUrl)) {
+                $method = 'setWebhook';
+                if (ispos($webHookUrl, 'https://')) {
+                    $data['url'] = $webHookUrl;
+                    $data['max_connections'] = $maxConnections;
+                } else {
+                    throw new Exception('EX_NOT_SSL_URL');
+                }
+            } else {
+                $method = 'deleteWebhook';
+            }
+
+            $url = $this->apiUrl . $this->botToken . '/' . $method;
+            if ($this->debug) {
+                deb($url);
+            }
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            curl_setopt($ch, CURLOPT_POST, 1);
+            if (!empty($data)) {
+                $data_json = json_encode($data);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data_json);
+            }
+
+            if ($this->debug) {
+                $result = curl_exec($ch);
+                deb($result);
+                $curlError = curl_error($ch);
+                if (!empty($curlError)) {
+                    show_error(__('Error') . ' ' . __('Telegram') . ': ' . $curlError);
+                } else {
+                    show_success(__('Telegram API sending via') . ' ' . $this->apiUrl . ' ' . __('success'));
+                }
+            } else {
+                $result = curl_exec($ch);
+            }
+            curl_close($ch);
+        } else {
+            throw new Exception('EX_TOKEN_EMPTY');
+        }
+        return($result);
+    }
+
+    /**
+     * Returns bot web hook info
+     * 
+     * @return string
+     */
+    public function getWebHookInfo() {
+        $result = '';
+        if (!empty($this->botToken)) {
+            $method = 'getWebhookInfo';
+            $url = $this->apiUrl . $this->botToken . '/' . $method;
+            if ($this->debug) {
+                deb($url);
+            }
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+            if ($this->debug) {
+                $result = curl_exec($ch);
+                deb($result);
+                $curlError = curl_error($ch);
+                if (!empty($curlError)) {
+                    show_error(__('Error') . ' ' . __('Telegram') . ': ' . $curlError);
+                } else {
+                    show_success(__('Telegram API sending via') . ' ' . $this->apiUrl . ' ' . __('success'));
+                }
+            } else {
+                $result = curl_exec($ch);
+            }
+            curl_close($ch);
+        }
+
+        return($result);
+    }
+
+    /**
+     * Returns webhook data
+     * 
+     * @param bool $rawData receive raw reply or preprocess to something easy
+     * 
+     * @return array
+     */
+    public function getHookData($rawData = false) {
+        $result = array();
+        $postRaw = file_get_contents('php://input');
+        if (!empty($postRaw)) {
+            $postRaw = json_decode($postRaw, true);
+            if ($this->debug) {
+                debarr($result);
+            }
+
+            if (!$rawData) {
+                if (isset($postRaw['message'])) {
+                    if (isset($postRaw['message']['from'])) {
+                        $result['message_id'] = $postRaw['message']['message_id'];
+                        $result['from']['id'] = $postRaw['message']['from']['id'];
+                        $result['from']['username'] = $postRaw['message']['from']['username'];
+                        $result['chat']['id'] = $postRaw['message']['chat']['id'];
+                        $result['chat']['type'] = $postRaw['message']['chat']['type'];
+                        $result['date'] = $postRaw['message']['date'];
+                        @$result['text'] = $postRaw['message']['text'];
+                    }
+                }
+            } else {
+                $result = $postRaw;
+            }
+        }
+        return($result);
+    }
+
 }
 
 ?>
