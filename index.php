@@ -46,8 +46,8 @@ $query_counter = 0;
 
 
 
-require_once('api/autoloader.php');
-require_once($yalfCore->getIndexModulePath());
+require_once('api/autoloader.php'); //preloaging required libs
+$yalfCore->loadCurrentModule(); //react to some module routes
 
 
 if (XHPROF) {

@@ -59,6 +59,20 @@ class YALFCore {
     protected $globalMenuEnabled = false;
 
     /**
+     * Contains modules preloaded from general modules directory
+     *
+     * @var array
+     */
+    protected $modules = array();
+
+    /**
+     * Contains preloaded modules rights database
+     *
+     * @var array
+     */
+    protected $rights_database = array();
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
@@ -74,6 +88,7 @@ class YALFCore {
 
     public function __construct() {
         $this->loadConfig();
+        $this->initializeModules();
         $this->setOptions();
         $this->switchIndexModule();
     }
@@ -99,13 +114,16 @@ class YALFCore {
         $moduleName = preg_replace('/\0/s', '', $moduleName);
         $moduleName = preg_replace("#[^a-z0-9A-Z]#Uis", '', $moduleName);
         if (!empty($moduleName)) {
-            //no module dir
-            if (file_exists(MODULES_PATH . $moduleName)) {
-                //check for module codepart
-                if (file_exists(MODULES_PATH . $moduleName . '/' . self::MODULE_CODE_NAME)) {
-                    //no module definition
-                    if (file_exists(MODULES_PATH . $moduleName . '/' . self::MODULE_DEFINITION)) {
-                        $result = true;
+            //already preloaded from filesystem
+            if (isset($this->modules['main'][$moduleName])) {
+                //no module dir
+                if (file_exists(MODULES_PATH . $moduleName)) {
+                    //check for module codepart
+                    if (file_exists(MODULES_PATH . $moduleName . '/' . self::MODULE_CODE_NAME)) {
+                        //check for module definition
+                        if (file_exists(MODULES_PATH . $moduleName . '/' . self::MODULE_DEFINITION)) {
+                            $result = true;
+                        }
                     }
                 }
             }
@@ -208,6 +226,65 @@ class YALFCore {
                 die('No module ' . $moduleName . ' exists');
             }
         }
+    }
+
+    /**
+     * Loads some module by its name
+     * 
+     * @return void
+     */
+    public function loadCurrentModule() {
+        require_once ($this->getIndexModulePath());
+    }
+
+    /**
+     * Preloads all general modules from general modules directory
+     * 
+     * @return void
+     */
+    protected function initializeModules() {
+        $disabledModules = array();
+        //some modules may be disabled
+        if (isset($this->config['YALF_DISABLED_MODULES'])) {
+            if (!empty($this->config['YALF_DISABLED_MODULES'])) {
+                $disabledModules = explode(',', $this->config['YALF_DISABLED_MODULES']);
+                $disabledModules = array_flip($disabledModules);
+            }
+        }
+
+        $allModules = scandir(MODULES_PATH);
+        foreach ($allModules as $module) {
+            if (!isset($disabledModules[$module])) {
+                if (is_readable(MODULES_PATH . $module . '/' . self::MODULE_DEFINITION)) {
+                    include_once(MODULES_PATH . $module . '/' . self::MODULE_DEFINITION);
+                }
+            }
+        }
+        // Register modules rights in main database
+        foreach ($this->modules as $type => $modules) {
+            foreach ($modules as $module => $moduledata) {
+                foreach ($moduledata['rights'] as $right => $desc) {
+                    $this->rights_database[$right] = $desc;
+                }
+            }
+        }
+    }
+
+    /**
+     * Registers module as preloaded
+     * 
+     * @param string $module
+     * @param string $type
+     * @param string $title
+     * @param string $copyright
+     * @param array $rights
+     * 
+     * @return void
+     */
+    protected function registerModule($module, $type, $title, $copyright = '', $rights = array()) {
+        $this->modules[$type][$module]['title'] = $title;
+        $this->modules[$type][$module]['copyright'] = $copyright;
+        $this->modules[$type][$module]['rights'] = $rights;
     }
 
     /**
