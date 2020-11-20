@@ -66,6 +66,7 @@ class YALFCore {
     const LIBS_PATH = 'api/libs/';
     const LANG_PATH = 'languages/';
     const MODULE_CODE_NAME = 'index.php';
+    const MODULE_DEFINITION = 'module.php';
     const ROUTE_MODULE_LOAD = 'module';
     const SKINS_PATH = 'skins/';
     const MENU_ICONS_PATH = 'skins/menuicons/';
@@ -100,9 +101,12 @@ class YALFCore {
         if (!empty($moduleName)) {
             //no module dir
             if (file_exists(MODULES_PATH . $moduleName)) {
-                //no module codepart
+                //check for module codepart
                 if (file_exists(MODULES_PATH . $moduleName . '/' . self::MODULE_CODE_NAME)) {
-                    $result = true;
+                    //no module definition
+                    if (file_exists(MODULES_PATH . $moduleName . '/' . self::MODULE_DEFINITION)) {
+                        $result = true;
+                    }
                 }
             }
         }

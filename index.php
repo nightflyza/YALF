@@ -9,6 +9,7 @@ define('XHPROF', 0);
  * rcms-like commons consts defines
  */
 define('CONFIG_PATH', 'config/');
+define('DATA_PATH', 'content/');
 define('MODULES_PATH', 'modules/general/');
 
 /**
