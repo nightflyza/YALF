@@ -32,6 +32,7 @@ if (!function_exists('log_register')) {
      * @return void
      */
     function log_register($data) {
+        // TODO:
         //do nothing at this moment :P
     }
 
@@ -43,6 +44,7 @@ if (!function_exists('cfr')) {
      * dummy rights system replacement
      */
     function cfr($right) {
+        //TODO:
         return(true);
     }
 
