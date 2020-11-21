@@ -49,8 +49,8 @@ $query_counter = 0;
 
 
 require_once('api/autoloader.php'); //preloaging required libs
-define('LOGGED_IN', $yalfCore->getLoggedInState()); //emulating RCMS LOGGED_IN state
-$yalfCore->loadCurrentModule(); //react to some module routes
+define('LOGGED_IN', $system->getLoggedInState()); //emulating RCMS LOGGED_IN state
+$system->loadCurrentModule(); //react to some module routes
 
 
 if (XHPROF) {
@@ -62,7 +62,7 @@ if (XHPROF) {
 
 
 //web based renderer template load
-if ($yalfCore->getRenderer() == 'WEB') {
-    require_once($yalfCore->getSkinPath() . $yalfCore::SKIN_TEMPLATE_NAME);
+if ($system->getRenderer() == 'WEB') {
+    require_once($system->getSkinPath() . $system::SKIN_TEMPLATE_NAME);
 }
 

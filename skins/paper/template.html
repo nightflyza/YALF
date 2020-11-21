@@ -3,20 +3,20 @@
     <head>
         <meta charset="utf-8" />
         <meta name="google" content="notranslate" />
-        <link rel="apple-touch-icon" sizes="76x76" href="<?=$yalfCore->getSkinPath(); ?>assets/img/apple-icon.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="<?=$system->getSkinPath(); ?>assets/img/apple-icon.png">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
         <title>
-            <?=__($yalfCore->getPageTitle()); ?>
+            <?=__($system->getPageTitle()); ?>
         </title>
         <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
         <!--     Fonts and icons     -->
-        <link href="<?=$yalfCore->getSkinPath(); ?>assets/css/montserrat.css" rel="stylesheet" />
+        <link href="<?=$system->getSkinPath(); ?>assets/css/montserrat.css" rel="stylesheet" />
         <!-- CSS Files -->
-        <link href="<?=$yalfCore->getSkinPath(); ?>assets/css/bootstrap.min.css" rel="stylesheet" />
-        <link href="<?=$yalfCore->getSkinPath(); ?>assets/css/paper-dashboard.css?v=2.0.0" rel="stylesheet" />
+        <link href="<?=$system->getSkinPath(); ?>assets/css/bootstrap.min.css" rel="stylesheet" />
+        <link href="<?=$system->getSkinPath(); ?>assets/css/paper-dashboard.css?v=2.0.0" rel="stylesheet" />
         <!-- Ubilling custom styles -->
-        <link href="<?=$yalfCore->getSkinPath(); ?>assets/css/ubilling.css" rel="stylesheet" />
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/core/jquery.min.js"></script>
+        <link href="<?=$system->getSkinPath(); ?>assets/css/ubilling.css" rel="stylesheet" />
+        <script src="<?=$system->getSkinPath(); ?>assets/js/core/jquery.min.js"></script>
         <!-- JQDT  -->
         <style type="text/css" title="currentStyle">
             @import "modules/jsc/dt3/css/jquery.dataTables_themeroller.css";
@@ -30,13 +30,13 @@
             <div class="sidebar" data-color="white" data-active-color="danger">
                 <div class="logo">
                     <div class="logo-image-small">
-                        <?=$yalfCore->renderLogo(); ?>
+                        <?=$system->renderLogo(); ?>
                     </div>
 
                 </div>
                 <div class="sidebar-wrapper">
                     <ul class="nav">
-                        <?=$yalfCore->renderMenu(); ?> 
+                        <?=$system->renderMenu(); ?> 
                     </ul>
                 </div>
             </div>
@@ -52,7 +52,7 @@
                                     <span class="navbar-toggler-bar bar3"></span>
                                 </button>
                             </div>
-                            <a class="navbar-brand" href="index.php"><?=__($yalfCore->getPageTitle()); ?></a>
+                            <a class="navbar-brand" href="index.php"><?=__($system->getPageTitle()); ?></a>
                         </div>
 
                         <div class="collapse navbar-collapse justify-content-end" id="navigation">
@@ -101,16 +101,16 @@
         </div>
         <!--   Core JS Files   -->
 
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/core/jquery-migrate.min.js"></script>
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/core/popper.min.js"></script>
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/core/bootstrap.min.js"></script>
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/plugins/perfect-scrollbar.jquery.min.js"></script>
+        <script src="<?=$system->getSkinPath(); ?>assets/js/core/jquery-migrate.min.js"></script>
+        <script src="<?=$system->getSkinPath(); ?>assets/js/core/popper.min.js"></script>
+        <script src="<?=$system->getSkinPath(); ?>assets/js/core/bootstrap.min.js"></script>
+        <script src="<?=$system->getSkinPath(); ?>assets/js/plugins/perfect-scrollbar.jquery.min.js"></script>
         <!-- Chart JS -->
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/plugins/chartjs.min.js"></script>
+        <script src="<?=$system->getSkinPath(); ?>assets/js/plugins/chartjs.min.js"></script>
         <!--  Notifications Plugin    -->
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/plugins/bootstrap-notify.js"></script>
+        <script src="<?=$system->getSkinPath(); ?>assets/js/plugins/bootstrap-notify.js"></script>
         <!-- Control Center for Now Ui Dashboard: parallax effects, scripts for the example pages etc -->
-        <script src="<?=$yalfCore->getSkinPath(); ?>assets/js/paper-dashboard.min.js?v=2.0.0" type="text/javascript"></script>
+        <script src="<?=$system->getSkinPath(); ?>assets/js/paper-dashboard.min.js?v=2.0.0" type="text/javascript"></script>
 
         <!-- JUI -->
         <link type="text/css" href="modules/jsc/jui/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />

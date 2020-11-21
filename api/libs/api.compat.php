@@ -69,8 +69,8 @@ function rcms_date_localise($str) {
  * @return string
  */
 function curlang() {
-    global $yalfCore;
-    $locale = $yalfCore->getCurLang();
+    global $system;
+    $locale = $system->getCurLang();
     return($locale);
 }
 

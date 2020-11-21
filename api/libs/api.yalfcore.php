@@ -692,4 +692,57 @@ class YALFCore {
         return true;
     }
 
+    /**
+     * TODO: This piece of shit must be reviewed and rewritten
+     * to many existing code use $system->getRightsForUser and $system->checkForRight('ONLINE') or something like
+     */
+
+    /**
+     * Check if user have specified right
+     * 
+     * @param string $right
+     * @param string $username
+     * 
+     * @return bool
+     */
+    public function checkForRight($right = '-any-', $username = '') {
+        if (empty($username)) {
+            $rights = &$this->rights;
+            $root = &$this->root;
+        } else {
+            if (!$this->getRightsForUser($username, $rights, $root)) {
+                return false;
+            }
+        }
+
+        return $root OR ( $right == '-any-' && !empty($rights)) OR ! empty($rights[$right]);
+    }
+
+    /**
+     * 
+     * @param string $username
+     * @param pointer $rights
+     * @param pointer $root
+     * 
+     * @return bool
+     */
+    protected function getRightsForUser($username, &$rights, &$root) {
+        if (!($userdata = $this->getUserData($username))) {
+            return false;
+        }
+
+        $rights = array();
+        $root = false;
+        if ($userdata['admin'] !== '*') {
+            preg_match_all('/\|(.*?)\|/', $userdata['admin'], $rights_r);
+            foreach ($rights_r[1] as $right) {
+                $rights[$right] = (empty($this->rights_database[$right])) ? ' ' : $this->rights_database[$right];
+            }
+        } else {
+            $root = true;
+        }
+
+        return true;
+    }
+
 }
