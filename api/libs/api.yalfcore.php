@@ -66,11 +66,53 @@ class YALFCore {
     protected $modules = array();
 
     /**
-     * Contains preloaded modules rights database
+     * Contains all rights injected with startup modules initialization
      *
      * @var array
      */
     protected $rights_database = array();
+
+    /**
+     * Is now some user logged in flag
+     *
+     * @var bool
+     */
+    protected $loggedIn = false;
+
+    /**
+     * Have current user root rights?
+     *
+     * @var bool
+     */
+    protected $root = false;
+
+    /**
+     * This array contain data from user's profile
+     *
+     * @var array
+     */
+    protected $user = array();
+
+    /**
+     * Contains current user rights
+     *
+     * @var array
+     */
+    protected $rights = array();
+
+    /**
+     * Some mystic output buffer. Used in i18n, users auth etc.
+     *
+     * @var array
+     */
+    protected $results = array();
+
+    /**
+     * Name of default auth cookie. May be configurable in future.
+     *
+     * @var string
+     */
+    protected $cookie_user = 'reloadcms_user';
 
     /**
      * Some paths, routes etc
@@ -88,6 +130,8 @@ class YALFCore {
 
     public function __construct() {
         $this->loadConfig();
+        $this->performUserAuth();
+        $this->initializeUser();
         $this->initializeModules();
         $this->setOptions();
         $this->switchIndexModule();
@@ -216,14 +260,27 @@ class YALFCore {
      * @return void
      */
     protected function switchIndexModule() {
-        if (isset($_GET[self::ROUTE_MODULE_LOAD])) {
-            $moduleName = $_GET[self::ROUTE_MODULE_LOAD];
-            $moduleName = preg_replace('/\0/s', '', $moduleName);
-            $moduleName = preg_replace("#[^a-z0-9A-Z]#Uis", '', $moduleName);
-            if ($this->isModuleValid($_GET[self::ROUTE_MODULE_LOAD])) {
-                $this->indexModule = $moduleName;
+        $forceLoginForm = false;
+        if (!$this->loggedIn) {
+            $forceLoginForm = true;
+        }
+        if (!$forceLoginForm) {
+            if (isset($_GET[self::ROUTE_MODULE_LOAD])) {
+                $moduleName = $_GET[self::ROUTE_MODULE_LOAD];
+                $moduleName = preg_replace('/\0/s', '', $moduleName);
+                $moduleName = preg_replace("#[^a-z0-9A-Z]#Uis", '', $moduleName);
+                if ($this->isModuleValid($_GET[self::ROUTE_MODULE_LOAD])) {
+                    $this->indexModule = $moduleName;
+                } else {
+                    die('No module ' . $moduleName . ' exists');
+                }
+            }
+        } else {
+            //force login form switch
+            if ($this->isModuleValid('loginform')) {
+                $this->indexModule = 'loginform';
             } else {
-                die('No module ' . $moduleName . ' exists');
+                die('No module loginform exists');
             }
         }
     }
@@ -423,6 +480,216 @@ class YALFCore {
      */
     public function getGlobalMenuFlag() {
         return($this->globalMenuEnabled);
+    }
+
+    /**
+     * Returns some user data as array
+     * 
+     * @param string $username
+     * 
+     * @return array/bool
+     */
+    public function getUserData($username) {
+        $result = @unserialize(@file_get_contents(USERS_PATH . basename($username)));
+        if (empty($result)) {
+            return (false);
+        } else {
+            return $result;
+        }
+    }
+
+    /**
+     * Inits user and sets some cookies if its ok
+     * 
+     * @param bool $skipcheck Use this parameter to skip userdata checks
+     * 
+     * @return bool
+     */
+    protected function initializeUser($skipcheck = false) {
+        //Inits default guest user
+        $this->user = array('nickname' => __('Guest'), 'username' => 'guest', 'admin' => '', 'tz' => (int) @$this->config['default_tz'], 'accesslevel' => 0);
+        $this->initialiseAccess($this->user['admin']);
+
+        if (@$this->config['YALF_AUTH_ENABLED']) {
+            // If user cookie is not present we exiting without error
+            if (empty($_COOKIE[$this->cookie_user])) {
+                $this->loggedIn = false;
+                return (true);
+            }
+
+            // So we have a cookie, let's extract data from it
+            $cookie_data = explode(':', $_COOKIE[$this->cookie_user], 2);
+            if (!$skipcheck) {
+
+                // If this cookie is invalid - we exiting destroying cookie and exiting with error
+                if (sizeof($cookie_data) != 2) {
+                    setcookie($this->cookie_user, null, time() - 3600);
+                    return(false);
+                }
+                // Now we must validate user's data
+                if (!$this->checkUserData($cookie_data[0], $cookie_data[1], 'user_init', true, $this->user)) {
+                    setcookie($this->cookie_user, null, time() - 3600);
+                    $this->loggedIn = false;
+                    return(false);
+                }
+            }
+
+            $userdata = $this->getUserData($cookie_data[0]);
+            //failed to load user profile
+            if ($userdata == false) {
+                setcookie($this->cookie_user, null, time() - 3600);
+                $this->loggedIn = false;
+                return (false);
+            }
+
+            $this->user = $userdata;
+            $this->loggedIn = true;
+
+            // Initialise access levels
+            $this->initialiseAccess($this->user['admin']);
+
+            // Secure the nickname
+            $this->user['nickname'] = htmlspecialchars($this->user['nickname']);
+        } else {
+            //All users around is logged in and have root rights
+            $this->loggedIn = true;
+            $this->root = true;
+        }
+    }
+
+    /**
+     * Performs user ath/deauth if required
+     * 
+     * @return void
+     */
+    protected function performUserAuth() {
+        if ($this->config['YALF_AUTH_ENABLED']) {
+            if (!empty($_POST['login_form'])) {
+                $this->logInUser(@$_POST['username'], @$_POST['password'], !empty($_POST['remember']) ? true : false);
+            }
+            //default POST logout
+            if (!empty($_POST['logout_form'])) {
+                $this->logOutUser();
+                rcms_redirect('index.php', true);
+            }
+            //additional get-request user auto logout sub
+            if (!empty($_GET['idleTimerAutoLogout'])) {
+                $this->logOutUser();
+                rcms_redirect('index.php', true);
+            }
+
+            //normal get-request user logout
+            if (!empty($_GET['forceLogout'])) {
+                $this->logOutUser();
+                rcms_redirect('index.php', true);
+            }
+        }
+    }
+
+    /**
+     * Parses some rights string into protected rights property
+     * 
+     * @param string $rights
+     * 
+     * @return bool
+     */
+    protected function initialiseAccess($rights) {
+        if ($rights !== '*') {
+            preg_match_all('/\|(.*?)\|/', $rights, $rights_r);
+            foreach ($rights_r[1] as $right) {
+                $this->rights[$right] = (empty($this->rights_database[$right])) ? ' ' : $this->rights_database[$right];
+            }
+        } else {
+            $this->root = true;
+        }
+        return (true);
+    }
+
+    /**
+     * This function log out user from system and destroys his cookie.
+     * 
+     * @return bool
+     */
+    protected function logOutUser() {
+        setcookie($this->cookie_user, '', time() - 3600);
+        $_COOKIE[$this->cookie_user] = '';
+        $this->initializeUser(false);
+        return (true);
+    }
+
+    /**
+     * This function check user's data and logs in him.
+     * 
+     * @param string $username
+     * @param string $password
+     * @param bool $remember
+     * 
+     * @return bool
+     */
+    protected function logInUser($username, $password, $remember) {
+        $username = basename($username);
+        if ($username == 'guest') {
+            return false;
+        }
+
+        if (!$this->loggedIn AND $this->checkUserData($username, $password, 'user_login', false, $userdata)) {
+            // OK... Let's allow user to log in :)
+            setcookie($this->cookie_user, $username . ':' . $userdata['password'], ($remember) ? time() + 3600 * 24 * 365 : null);
+            $_COOKIE[$this->cookie_user] = $username . ':' . $userdata['password'];
+            $this->initializeUser(true);
+            return (true);
+        } else {
+            return (false);
+        }
+    }
+
+    /**
+     * Returns logged in state
+     * 
+     * @return bool
+     */
+    public function getLoggedInState() {
+        return($this->loggedIn);
+    }
+
+    /**
+     * This function check user's data and validate his profile file.
+     * 
+     * @param string $username
+     * @param string $password
+     * @param string $report_to
+     * @param boolean $hash
+     * @param link $userdata
+     * 
+     * @return bool
+     */
+    protected function checkUserData($username, $password, $report_to, $hash, &$userdata) {
+        if (preg_replace("/[\d\w]+/i", "", $username) != "") {
+            $this->results[$report_to] = __('Invalid username');
+            return false;
+        }
+        // If login is not exists - we exiting with error
+        if (!is_file(USERS_PATH . $username)) {
+            $this->results[$report_to] = __('There are no user with this username');
+            return false;
+        }
+        // So all is ok. Let's load userdata
+        $result = $this->getUserData($username);
+        // If userdata is invalid we must exit with error
+        if (empty($result))
+            return false;
+        // If password is invalid - exit with error
+        if ((!$hash && md5($password) !== $result['password']) || ($hash && $password !== $result['password'])) {
+            $this->results[$report_to] = __('Invalid password');
+            return false;
+        }
+        // If user is blocked - exit with error
+        if (@$result['blocked']) {
+            $this->results[$report_to] = __('This account has been blocked by administrator');
+            return false;
+        }
+        $userdata = $result;
+        return true;
     }
 
 }

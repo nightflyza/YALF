@@ -10,7 +10,9 @@ define('XHPROF', 0);
  */
 define('CONFIG_PATH', 'config/');
 define('DATA_PATH', 'content/');
+define('USERS_PATH', 'content/users/');
 define('MODULES_PATH', 'modules/general/');
+
 
 /**
  * Profiler init
@@ -47,6 +49,7 @@ $query_counter = 0;
 
 
 require_once('api/autoloader.php'); //preloaging required libs
+define('LOGGED_IN', $yalfCore->getLoggedInState()); //emulating RCMS LOGGED_IN state
 $yalfCore->loadCurrentModule(); //react to some module routes
 
 
