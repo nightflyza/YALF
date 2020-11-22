@@ -622,7 +622,7 @@ sub, sup {
 }
 
 .glamour input:hover, textarea:hover { 
-    background: #eee; 
+    /** background: #eee; **/
 } 
 
 .glamour  legend
