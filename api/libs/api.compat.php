@@ -40,12 +40,17 @@ if (!function_exists('log_register')) {
 
 if (!function_exists('cfr')) {
 
-    /**
-     * dummy rights system replacement
-     */
+   /**
+    * Checks is some right available for current user
+    * 
+    * @global object $system
+    * @param string $right
+    * 
+    * @return bool
+    */
     function cfr($right) {
-        //TODO:
-        return(true);
+       global $system;
+       return($system->checkForRight($right));
     }
 
 }

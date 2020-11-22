@@ -1,8 +1,7 @@
 <?php
 
 if (!LOGGED_IN) {
-    require_once ('api/libs/api.yalfloginform.php');
-    $loginForm = new LoginForm();
+    $loginForm = new YalfLoginForm();
     show_window('', $loginForm->render());
 } else {
     //basic logout control

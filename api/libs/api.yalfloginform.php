@@ -3,7 +3,7 @@
 /**
  * Ubilling administrative interface login form
  */
-class LoginForm {
+class YalfLoginForm {
 
     protected $form = '';
     protected $loginPreset = '';
