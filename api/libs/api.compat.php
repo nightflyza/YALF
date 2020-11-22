@@ -40,17 +40,33 @@ if (!function_exists('log_register')) {
 
 if (!function_exists('cfr')) {
 
-   /**
-    * Checks is some right available for current user
-    * 
-    * @global object $system
-    * @param string $right
-    * 
-    * @return bool
-    */
+    /**
+     * Checks is some right available for current user
+     * 
+     * @global object $system
+     * @param string $right
+     * 
+     * @return bool
+     */
     function cfr($right) {
-       global $system;
-       return($system->checkForRight($right));
+        global $system;
+        return($system->checkForRight($right));
+    }
+
+}
+
+if (!function_exists('whoami')) {
+
+    /**
+     * Returns current user login
+     * 
+     * @global object $system
+     * 
+     * @return string
+     */
+    function whoami() {
+        global $system;
+        return($system->getLoggedInUsername());
     }
 
 }

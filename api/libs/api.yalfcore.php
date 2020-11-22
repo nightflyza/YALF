@@ -461,11 +461,19 @@ class YALFCore {
                 $rawData = parse_ini_file(self::YALF_MENU_PATH, true);
                 if (!empty($rawData)) {
                     foreach ($rawData as $section => $each) {
+                        $renderMenuEntry = true;
                         $icon = (!empty($each['ICON'])) ? $each['ICON'] : self::DEFAULT_ICON;
                         $icon = self::MENU_ICONS_PATH . $icon;
                         $name = __($each['NAME']);
                         $actClass = ($this->getCurrentModuleName() == $section) ? 'active' : '';
-                        $result .= wf_tag('li', false, $actClass) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
+                        if (isset($each['NEED_RIGHT'])) {
+                            if (!empty($each['NEED_RIGHT'])) {
+                                $renderMenuEntry = $this->checkForRight($each['NEED_RIGHT']);
+                            }
+                        }
+                        if ($renderMenuEntry) {
+                            $result .= wf_tag('li', false, $actClass) . wf_Link($each['URL'], wf_img($icon) . ' ' . $name, false) . wf_tag('li', true);
+                        }
                     }
                 }
             }
@@ -690,6 +698,15 @@ class YALFCore {
         }
         $userdata = $result;
         return true;
+    }
+
+    /**
+     * Public getter for currently logged in user login
+     * 
+     * @return string
+     */
+    public function getLoggedInUsername() {
+        return($this->user['username']);
     }
 
     /**
