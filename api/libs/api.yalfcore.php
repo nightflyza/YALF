@@ -122,6 +122,27 @@ class YALFCore {
     protected $authEnabled = false;
 
     /**
+     * System logging engine
+     *
+     * @var string
+     */
+    protected $logType = 'fake';
+
+    /**
+     * Database logs table
+     *
+     * @var string
+     */
+    protected $logTable = 'weblogs';
+
+    /**
+     * Default system log file path. May be configurable in future.
+     *
+     * @var string
+     */
+    protected $logFilePath = 'content/logs/yalflog.log';
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
@@ -135,6 +156,9 @@ class YALFCore {
     const MENU_ICONS_PATH = 'skins/menuicons/';
     const SKIN_TEMPLATE_NAME = 'template.html';
 
+    /**
+     * Creates new system core instance
+     */
     public function __construct() {
         $this->loadConfig();
         $this->performUserAuth();
@@ -255,6 +279,14 @@ class YALFCore {
         if (isset($this->config['YALF_AUTH_ENABLED'])) {
             if ($this->config['YALF_AUTH_ENABLED']) {
                 $this->authEnabled = true;
+            }
+        }
+
+        //system logging settings
+        if (isset($this->config['YALF_LOGGING_TYPE'])) {
+            $this->logType = $this->config['YALF_LOGGING_TYPE'];
+            if (isset($this->config['YALF_LOG_TABLE'])) {
+                $this->logTable = $this->config['YALF_LOG_TABLE'];
             }
         }
 
@@ -730,6 +762,38 @@ class YALFCore {
      */
     public function getLoggedInUsername() {
         return($this->user['username']);
+    }
+
+    /**
+     * Logs some data to system log
+     * 
+     * @param string $event Event text to log
+     * 
+     * @return void
+     */
+    public function logEvent($event) {
+        $date = date("Y-m-d H:i:s");
+        $myLogin = $this->getLoggedInUsername();
+        $myIp = $_SERVER['REMOTE_ADDR'];
+
+        switch ($this->logType) {
+            case 'file':
+                $logRecord = $date . ' ' . $myLogin . ' ' . $myIp . ': ' . $event . PHP_EOL;
+                file_put_contents($this->logFilePath, $logRecord, FILE_APPEND);
+                break;
+            case 'mysql':
+                $event = mysql_real_escape_string($event);
+                $query = "INSERT INTO `" . $this->logTable . "` (`id`,`date`,`admin`,`ip`,`event`) VALUES";
+                $query .= "(NULL,'" . $date . "','" . $myLogin . "','" . $myIp . "','" . $event . "');";
+                nr_query($query);
+                break;
+            case 'fake':
+                //just do nothing ^_^
+                break;
+            default :
+                die('Wrong logging type');
+                break;
+        }
     }
 
     /**

@@ -25,15 +25,15 @@ if (!function_exists('__')) {
 if (!function_exists('log_register')) {
 
     /**
-     * Dummy function to emulate Ubilling logging
+     * Dummy function wrapper around logEvent system logging
      * 
      * @param string $data
      * 
      * @return void
      */
     function log_register($data) {
-        // TODO:
-        //do nothing at this moment :P
+        global $system;
+        $system->logEvent($data);
     }
 
 }
