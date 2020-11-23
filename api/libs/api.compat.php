@@ -14,7 +14,9 @@ if (!function_exists('__')) {
     function __($str) {
         global $lang;
         if (isset($lang['def'][$str])) {
-            $str = $lang['def'][$str];
+            if (!empty($lang['def'][$str])) {
+                $str = $lang['def'][$str];
+            }
         }
         return($str);
     }

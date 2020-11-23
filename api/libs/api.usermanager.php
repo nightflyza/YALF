@@ -220,7 +220,7 @@ class UserManager {
                 $inputs .= wf_PasswordInput(self::PROUTE_PASSWORDCONFIRM, __('New password confirmation'), '', true, 20);
                 $inputs .= wf_TextInput(self::PROUTE_NICKNAME, __('NickName'), $currentUserData['nickname'], true, 20, 'alphanumeric');
                 $inputs .= wf_TextInput(self::PROUTE_EMAIL, __('Email'), $currentUserData['email'], true, 20);
-                $inputs .= wf_Submit(__('Create'));
+                $inputs .= wf_Submit(__('Save'));
 
                 $result .= wf_Form('', 'POST', $inputs, 'glamour');
             } else {
