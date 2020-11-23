@@ -1,6 +1,5 @@
 <?php
 
-global $system;
 if ($system->getAuthEnabled()) {
     if (cfr('ROOT')) {
 

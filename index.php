@@ -50,7 +50,7 @@ $query_counter = 0;
 
 require_once('api/autoloader.php'); //preloaging required libs
 define('LOGGED_IN', $system->getLoggedInState()); //emulating RCMS LOGGED_IN state
-$system->loadCurrentModule(); //react to some module routes
+require_once ($system->getIndexModulePath()); //react to some module routes
 
 
 if (XHPROF) {

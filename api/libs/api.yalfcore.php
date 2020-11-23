@@ -373,7 +373,8 @@ class YALFCore {
     }
 
     /**
-     * Loads some module by its name
+     * Loads some module by its name. 
+     * Not used at this moment, due fails on global objects like $ubillingConfig, $system, etc
      * 
      * @return void
      */
