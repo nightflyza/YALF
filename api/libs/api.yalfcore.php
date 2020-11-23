@@ -512,9 +512,27 @@ class YALFCore {
                         $icon = self::MENU_ICONS_PATH . $icon;
                         $name = __($each['NAME']);
                         $actClass = ($this->getCurrentModuleName() == $section) ? 'active' : '';
+                        //right check
                         if (isset($each['NEED_RIGHT'])) {
-                            if (!empty($each['NEED_RIGHT'])) {
-                                $renderMenuEntry = $this->checkForRight($each['NEED_RIGHT']);
+                            //is auth engine enabled?
+                            if ($this->authEnabled) {
+                                if (!empty($each['NEED_RIGHT'])) {
+                                    $renderMenuEntry = $this->checkForRight($each['NEED_RIGHT']);
+                                }
+                            }
+                        }
+
+                        //option check
+                        if ($renderMenuEntry) {
+                            //if not denied by rights now
+                            if (isset($each['NEED_OPTION'])) {
+                                if (!empty($each['NEED_OPTION'])) {
+                                    if (isset($this->config[$each['NEED_OPTION']])) {
+                                        if (empty($this->config[$each['NEED_OPTION']])) {
+                                            $renderMenuEntry = false; //required option disabled
+                                        }
+                                    }
+                                }
                             }
                         }
                         if ($renderMenuEntry) {
