@@ -161,6 +161,7 @@ class YALFCore {
     const ROUTE_MODULE_LOAD = 'module';
     const SKINS_PATH = 'skins/';
     const MENU_ICONS_PATH = 'skins/menuicons/';
+    const DEFAULT_ICON='defaulticon.png';
     const SKIN_TEMPLATE_NAME = 'template.html';
 
     /**
