@@ -10,7 +10,7 @@ class YalfLoginForm {
     protected $passwordPreset = '';
     protected $breaks=true;
     protected $container=true;
-    protected $inputSize = 12;
+    protected $inputSize = 20;
 
     public function __construct($br=true,$container=true) {
         $this->loadForm($br,$container);

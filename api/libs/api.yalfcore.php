@@ -112,7 +112,14 @@ class YALFCore {
      *
      * @var string
      */
-    protected $cookie_user = 'reloadcms_user';
+    protected $cookie_user = 'yalf_user';
+
+    /**
+     * Name of default user defined locale. May be configurable in future.
+     *
+     * @var string
+     */
+    protected $cookie_locale = 'yalf_lang';
 
     /**
      * System athorization enable flag
@@ -256,8 +263,41 @@ class YALFCore {
 
         //locale selection
         if (isset($this->config['YALF_LANG'])) {
+            //setting default locale
             if (!empty($this->config['YALF_LANG'])) {
                 $this->language = $this->config['YALF_LANG'];
+            }
+        }
+
+        //locale switching if allowed
+        if (isset($this->config['YALF_LANG_SWITCHABLE'])) {
+            if ($this->config['YALF_LANG_SWITCHABLE']) {
+                //setting new locale on GET request
+                if (isset($_GET['yalfswitchlocale'])) {
+                    $customLocale = preg_replace('/\0/s', '', $_GET['yalfswitchlocale']);
+                    $customLocale = preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $customLocale);
+                    if (!empty($customLocale)) {
+                        if (file_exists(self::LANG_PATH . $customLocale)) {
+                            $this->language = $customLocale;
+                            setcookie($this->cookie_locale, $customLocale, time() + 2592000);
+                            $currentUrlCallback = $_SERVER['REQUEST_URI'];
+                            $currentUrlCallback = str_replace('&yalfswitchlocale=' . $customLocale, '', $currentUrlCallback);
+                            $currentUrlCallback = str_replace('?yalfswitchlocale=' . $customLocale, '', $currentUrlCallback);
+                            rcms_redirect($currentUrlCallback, true); //back to the same URL witchout switch param
+                        }
+                    }
+                }
+
+                //some custom locale already set
+                if (@$_COOKIE[$this->cookie_locale]) {
+                    $customLocale = preg_replace('/\0/s', '', $_COOKIE[$this->cookie_locale]);
+                    $customLocale = preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $customLocale);
+                    if (!empty($customLocale)) {
+                        if (file_exists(self::LANG_PATH . $customLocale)) {
+                            $this->language = $customLocale;
+                        }
+                    }
+                }
             }
         }
 
@@ -433,6 +473,15 @@ class YALFCore {
      */
     public function getCurLang() {
         return(substr($this->language, 0, '2'));
+    }
+
+    /**
+     * Returns current locale name
+     * 
+     * @return string
+     */
+    public function getCurLangName() {
+        return($this->language);
     }
 
     /**

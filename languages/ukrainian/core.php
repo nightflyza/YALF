@@ -24,4 +24,5 @@ $lang['def']['New password'] = 'Новий пароль';
 $lang['def']['New password confirmation'] = 'Підтвердження нового паролю';
 $lang['def']['Edit user permissions'] = 'Редагування привілеїв користувача';
 $lang['def']['User have all available rights and permissions'] = 'Користувач має всі можливі права та дозволи';
+$lang['def']['Back'] = 'Назад';
 

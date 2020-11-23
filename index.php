@@ -57,7 +57,7 @@ if (XHPROF) {
     $xhprof_data = xhprof_disable();
     $xhprof_runs = new XHProfRuns_Default();
     $xhprof_run_id = $xhprof_runs->save_run($xhprof_data, "xhprof_yalf");
-    $xhprof_link = wf_modal('XHPROF', 'XHPROF DEBUG DATA', '<iframe src="xhprof/xhprof_html/index.php?run=' . $xhprof_run_id . '&source=xhprof_yalf" width="100%" height="750"></iframe>', '', '1024', '768');
+    $xhprof_link = wf_modal('XHPROF', 'XHPROF DEBUG DATA', '<iframe src="' . $xhProfLibsPath . '/xhprof_html/index.php?run=' . $xhprof_run_id . '&source=xhprof_yalf" width="100%" height="750"></iframe>', '', '1024', '768');
 }
 
 
