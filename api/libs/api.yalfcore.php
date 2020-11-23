@@ -678,6 +678,15 @@ class YALFCore {
     }
 
     /**
+     * Returns rights database registered due modules preload
+     * 
+     * @return array
+     */
+    public function getRightsDatabase() {
+        return($this->rights_database);
+    }
+
+    /**
      * This function log out user from system and destroys his cookie.
      * 
      * @return bool

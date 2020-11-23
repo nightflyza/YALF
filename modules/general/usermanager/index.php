@@ -22,7 +22,7 @@ if ($system->getAuthEnabled()) {
             }
         }
 
-        //User editing
+        //User profile editing
         if (ubRouting::checkPost($userManager::PROUTE_DOEDIT)) {
             $saveResult = $userManager->saveUser();
             if (empty($saveResult)) {
@@ -32,13 +32,30 @@ if ($system->getAuthEnabled()) {
             }
         }
 
-        if (!ubRouting::checkGet($userManager::ROUTE_EDIT) AND ! ubRouting::checkGet($userManager::ROUTE_EDIT)) {
+        //User permissions/rights editing
+        if (ubRouting::checkPost($userManager::PROUTE_DOPERMS)) {
+            $permEditResult = $userManager->savePermissions();
+            if (empty($permEditResult)) {
+                ubRouting::nav($userManager::URL_ME . '&' . $userManager::ROUTE_PERMISSIONS . '=' . ubRouting::post($userManager::PROUTE_DOPERMS));
+            } else {
+                show_error($permEditResult);
+            }
+        }
+
+        if (!ubRouting::checkGet($userManager::ROUTE_EDIT) AND ! ubRouting::checkGet($userManager::ROUTE_PERMISSIONS)) {
             //rendering existing users list
             show_window(__('Available users'), $userManager->renderUsersList());
         } else {
             //rendering user data edit interface
             if (ubRouting::checkGet($userManager::ROUTE_EDIT)) {
                 show_window(__('Edit user') . ' ' . ubRouting::get($userManager::ROUTE_EDIT), $userManager->renderEditForm(ubRouting::get($userManager::ROUTE_EDIT)));
+                show_window('', wf_BackLink($userManager::URL_ME));
+            }
+
+
+            //rendering user permissions edit interface
+            if (ubRouting::checkGet($userManager::ROUTE_PERMISSIONS)) {
+                show_window(__('Edit user permissions') . ' ' . ubRouting::get($userManager::ROUTE_PERMISSIONS), $userManager->renderPermissionsForm(ubRouting::get($userManager::ROUTE_PERMISSIONS)));
                 show_window('', wf_BackLink($userManager::URL_ME));
             }
         }
