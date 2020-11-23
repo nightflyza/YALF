@@ -115,6 +115,13 @@ class YALFCore {
     protected $cookie_user = 'reloadcms_user';
 
     /**
+     * System athorization enable flag
+     *
+     * @var bool
+     */
+    protected $authEnabled = false;
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
@@ -241,6 +248,13 @@ class YALFCore {
         if (isset($this->config['YALF_MENU_ENABLED'])) {
             if ($this->config['YALF_MENU_ENABLED']) {
                 $this->globalMenuEnabled = true;
+            }
+        }
+
+        //system auth enabled
+        if (isset($this->config['YALF_AUTH_ENABLED'])) {
+            if ($this->config['YALF_AUTH_ENABLED']) {
+                $this->authEnabled = true;
             }
         }
 
@@ -658,6 +672,15 @@ class YALFCore {
      */
     public function getLoggedInState() {
         return($this->loggedIn);
+    }
+
+    /**
+     * Returns system athorization flag state
+     * 
+     * @return bool
+     */
+    public function getAuthEnabled() {
+        return($this->authEnabled);
     }
 
     /**
