@@ -88,6 +88,11 @@
                     <div class="container-fluid">
                         <div class="row">
                             <nav class="footer-nav">
+                                <?php
+                                if ($system->isLocaleSwitchable()) {
+                                 print(YalfLangSwitch::render());
+                                }
+                                ?>
                                 <div style="float:left;"> </div>
                             </nav>
                             <div class="credits ml-auto">

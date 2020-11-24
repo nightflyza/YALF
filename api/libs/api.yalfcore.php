@@ -150,6 +150,13 @@ class YALFCore {
     protected $logFilePath = 'content/logs/yalflog.log';
 
     /**
+     * Is live-locale switching allowed flag
+     *
+     * @var bool
+     */
+    protected $langSwitchAllowed = false;
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
@@ -161,7 +168,7 @@ class YALFCore {
     const ROUTE_MODULE_LOAD = 'module';
     const SKINS_PATH = 'skins/';
     const MENU_ICONS_PATH = 'skins/menuicons/';
-    const DEFAULT_ICON='defaulticon.png';
+    const DEFAULT_ICON = 'defaulticon.png';
     const SKIN_TEMPLATE_NAME = 'template.html';
 
     /**
@@ -273,10 +280,12 @@ class YALFCore {
         //locale switching if allowed
         if (isset($this->config['YALF_LANG_SWITCHABLE'])) {
             if ($this->config['YALF_LANG_SWITCHABLE']) {
-                
+                //setup of flag
+                $this->langSwitchAllowed = true;
+
                 //setting new locale on GET request
                 if (isset($_GET['yalfswitchlocale'])) {
-                    $rawLocale=$_GET['yalfswitchlocale'];
+                    $rawLocale = $_GET['yalfswitchlocale'];
                     $customLocale = preg_replace('/\0/s', '', $rawLocale);
                     $customLocale = preg_replace("#[^a-z0-9A-Z]#Uis", '', $customLocale);
                     if (!empty($customLocale)) {
@@ -441,6 +450,15 @@ class YALFCore {
      */
     public function getLibs() {
         return($this->loadLibs);
+    }
+
+    /**
+     * Returns state of flag that allows live locale switching by clients
+     * 
+     * @return bool
+     */
+    public function isLocaleSwitchable() {
+        return($this->langSwitchAllowed);
     }
 
     /**
