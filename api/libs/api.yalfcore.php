@@ -273,17 +273,19 @@ class YALFCore {
         //locale switching if allowed
         if (isset($this->config['YALF_LANG_SWITCHABLE'])) {
             if ($this->config['YALF_LANG_SWITCHABLE']) {
+                
                 //setting new locale on GET request
                 if (isset($_GET['yalfswitchlocale'])) {
-                    $customLocale = preg_replace('/\0/s', '', $_GET['yalfswitchlocale']);
-                    $customLocale = preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $customLocale);
+                    $rawLocale=$_GET['yalfswitchlocale'];
+                    $customLocale = preg_replace('/\0/s', '', $rawLocale);
+                    $customLocale = preg_replace("#[^a-z0-9A-Z]#Uis", '', $customLocale);
                     if (!empty($customLocale)) {
                         if (file_exists(self::LANG_PATH . $customLocale)) {
                             $this->language = $customLocale;
                             setcookie($this->cookie_locale, $customLocale, time() + 2592000);
                             $currentUrlCallback = $_SERVER['REQUEST_URI'];
-                            $currentUrlCallback = str_replace('&yalfswitchlocale=' . $customLocale, '', $currentUrlCallback);
-                            $currentUrlCallback = str_replace('?yalfswitchlocale=' . $customLocale, '', $currentUrlCallback);
+                            $currentUrlCallback = str_replace('&yalfswitchlocale=' . $rawLocale, '', $currentUrlCallback);
+                            $currentUrlCallback = str_replace('?yalfswitchlocale=' . $rawLocale, '', $currentUrlCallback);
                             rcms_redirect($currentUrlCallback, true); //back to the same URL witchout switch param
                         }
                     }
@@ -292,7 +294,7 @@ class YALFCore {
                 //some custom locale already set
                 if (@$_COOKIE[$this->cookie_locale]) {
                     $customLocale = preg_replace('/\0/s', '', $_COOKIE[$this->cookie_locale]);
-                    $customLocale = preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $customLocale);
+                    $customLocale = preg_replace("#[^a-z0-9A-Z]#Uis", '', $customLocale);
                     if (!empty($customLocale)) {
                         if (file_exists(self::LANG_PATH . $customLocale)) {
                             $this->language = $customLocale;
