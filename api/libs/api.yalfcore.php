@@ -157,6 +157,13 @@ class YALFCore {
     protected $langSwitchAllowed = false;
 
     /**
+     * Contains names of pre-loaded modules as modulename=>title
+     *
+     * @var array
+     */
+    protected $loadableModules = array();
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
@@ -202,11 +209,10 @@ class YALFCore {
     protected function isModuleValid($moduleName) {
         $result = false;
         $moduleName = preg_replace('/\0/s', '', $moduleName);
-        $moduleName = preg_replace("#[^a-z0-9A-Z]#Uis", '', $moduleName);
         if (!empty($moduleName)) {
             //already preloaded from filesystem
-            if (isset($this->modules['main'][$moduleName])) {
-                //no module dir
+            if (isset($this->loadableModules[$moduleName])) {
+                //check for module dir
                 if (file_exists(MODULES_PATH . $moduleName)) {
                     //check for module codepart
                     if (file_exists(MODULES_PATH . $moduleName . '/' . self::MODULE_CODE_NAME)) {
@@ -366,8 +372,7 @@ class YALFCore {
             if (isset($_GET[self::ROUTE_MODULE_LOAD])) {
                 $moduleName = $_GET[self::ROUTE_MODULE_LOAD];
                 $moduleName = preg_replace('/\0/s', '', $moduleName);
-                $moduleName = preg_replace("#[^a-z0-9A-Z]#Uis", '', $moduleName);
-                if ($this->isModuleValid($_GET[self::ROUTE_MODULE_LOAD])) {
+                if ($this->isModuleValid($moduleName)) {
                     $this->indexModule = $moduleName;
                 } else {
                     die('No module ' . $moduleName . ' exists');
@@ -416,12 +421,17 @@ class YALFCore {
                 }
             }
         }
+
         // Register modules rights in main database
         foreach ($this->modules as $type => $modules) {
             foreach ($modules as $module => $moduledata) {
+                //rights register
                 foreach ($moduledata['rights'] as $right => $desc) {
                     $this->rights_database[$right] = $desc;
                 }
+
+                //registering module as loadable
+                $this->loadableModules[$module] = $moduledata['title'];
             }
         }
     }
