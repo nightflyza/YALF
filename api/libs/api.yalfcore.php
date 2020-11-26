@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * Primary Y.A.L.F core class that implements core functionality
+ */
 class YALFCore {
 
     /**
@@ -381,8 +384,6 @@ class YALFCore {
      */
     protected function switchIndexModule() {
         $forceLoginForm = false; //show login form module instead any of called
-        
-
 //user is not authorized now and auth engine enabled
         if (!$this->loggedIn) {
             $forceLoginForm = true;
