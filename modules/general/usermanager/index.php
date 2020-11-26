@@ -59,7 +59,7 @@ if ($system->getAuthEnabled()) {
             }
         }
     } else {
-        show_error(__('Permission denied'));
+        show_error(__('Access denied'));
     }
 } else {
     show_error(__('Authorization engine disabled'));

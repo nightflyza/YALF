@@ -27,4 +27,9 @@ $lang['def']['User have all available rights and permissions'] = 'Користу
 $lang['def']['Back'] = 'Назад';
 $lang['def']['Index module'] = 'Головний модуль';
 $lang['def']['Testing module'] = 'Тестовий модуль';
+$lang['def']['Developers console'] = 'Консоль розробника';
+$lang['def']['SQL console'] = 'SQL консоль';
+$lang['def']['PHP console'] = 'PHP консоль';
+$lang['def']['Run SQL query'] = 'Виконати SQL запит';
+$lang['def']['Run PHP code'] = 'Виконати PHP код';
 
