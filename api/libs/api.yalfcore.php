@@ -164,6 +164,13 @@ class YALFCore {
     protected $loadableModules = array();
 
     /**
+     * Contains list of modules which not require any authorization (public modules)
+     *
+     * @var array
+     */
+    protected $noAuthModules = array();
+
+    /**
      * Some paths, routes etc
      */
     const YALF_CONF_PATH = 'config/yalf.ini';
@@ -255,11 +262,12 @@ class YALFCore {
             }
         }
 
-        //initial module preloading
+        //initial index module setup
         if (isset($this->config['INDEX_MODULE'])) {
             if (!empty($this->config['INDEX_MODULE'])) {
-                $this->indexModule = $this->config['INDEX_MODULE'];
-                if (!$this->isModuleValid($this->indexModule)) {
+                if ($this->isModuleValid($this->indexModule)) {
+                    $this->indexModule = $this->config['INDEX_MODULE'];
+                } else {
                     die('Module code ' . MODULES_PATH . $this->indexModule . '/' . self::MODULE_CODE_NAME . ' set in INDEX_MODULE is not exists!');
                 }
             }
@@ -275,7 +283,7 @@ class YALFCore {
             }
         }
 
-        //locale selection
+        //default locale selection
         if (isset($this->config['YALF_LANG'])) {
             //setting default locale
             if (!empty($this->config['YALF_LANG'])) {
@@ -348,6 +356,14 @@ class YALFCore {
             }
         }
 
+        //no auth public modules
+        if (isset($this->config['YALF_NO_AUTH_MODULES'])) {
+            if (!empty($this->config['YALF_NO_AUTH_MODULES'])) {
+                $this->noAuthModules = explode(',', $this->config['YALF_NO_AUTH_MODULES']);
+                $this->noAuthModules = array_flip($this->noAuthModules); //use module name as index
+            }
+        }
+
         //renderer type detection
         if (isset($this->config['LAYER_CLIRENDER'])) {
             $this->renderer = 'CLI';
@@ -359,16 +375,37 @@ class YALFCore {
     }
 
     /**
-     * Switches index module if its required
+     * Switches index(current) module if its required
      * 
      * @return void
      */
     protected function switchIndexModule() {
-        $forceLoginForm = false;
+        $forceLoginForm = false; //show login form module instead any of called
+        
+
+//user is not authorized now and auth engine enabled
         if (!$this->loggedIn) {
             $forceLoginForm = true;
         }
+
+
+        //is module public and excluded from forced auth?
+        if ($forceLoginForm) {
+            if (isset($_GET[self::ROUTE_MODULE_LOAD])) {
+                $moduleName = $_GET[self::ROUTE_MODULE_LOAD];
+                $moduleName = preg_replace('/\0/s', '', $moduleName);
+                if (isset($this->noAuthModules[$moduleName])) {
+                    $forceLoginForm = false;
+                }
+            } else {
+                if (isset($this->noAuthModules[$this->indexModule])) {
+                    $forceLoginForm = false;
+                }
+            }
+        }
+
         if (!$forceLoginForm) {
+            //switching module if set some required route
             if (isset($_GET[self::ROUTE_MODULE_LOAD])) {
                 $moduleName = $_GET[self::ROUTE_MODULE_LOAD];
                 $moduleName = preg_replace('/\0/s', '', $moduleName);
@@ -560,7 +597,6 @@ class YALFCore {
      * @return string
      */
     public function renderLogo() {
-
         $result = '';
         if (isset($this->config['YALF_LOGO'])) {
             if ((!empty($this->config['YALF_APP'])) AND ( !empty($this->config['YALF_URL'])) AND ( (!empty($this->config['YALF_LOGO'])))) {

@@ -25,4 +25,6 @@ $lang['def']['New password confirmation'] = 'Підтвердження ново
 $lang['def']['Edit user permissions'] = 'Редагування привілеїв користувача';
 $lang['def']['User have all available rights and permissions'] = 'Користувач має всі можливі права та дозволи';
 $lang['def']['Back'] = 'Назад';
+$lang['def']['Index module'] = 'Головний модуль';
+$lang['def']['Testing module'] = 'Тестовий модуль';
 
