@@ -202,6 +202,7 @@ class YalfSysConf {
                             $fileContent = str_replace("\r\n", "\n", $fileContent);
                         }
                         file_put_contents($fileToEdit, $fileContent);
+                        log_register('SYSCONF UPDATE FILE `' . $fileToEdit . '`');
                     } else {
                         $result .= __('File is not writable') . ': ' . $fileToEdit;
                     }

@@ -268,10 +268,10 @@ class YALFCore {
         //initial index module setup
         if (isset($this->config['INDEX_MODULE'])) {
             if (!empty($this->config['INDEX_MODULE'])) {
-                if ($this->isModuleValid($this->indexModule)) {
+                if ($this->isModuleValid($this->config['INDEX_MODULE'])) {
                     $this->indexModule = $this->config['INDEX_MODULE'];
                 } else {
-                    die('Module code ' . MODULES_PATH . $this->indexModule . '/' . self::MODULE_CODE_NAME . ' set in INDEX_MODULE is not exists!');
+                    die('Module code ' . MODULES_PATH . $this->config['INDEX_MODULE'] . '/' . self::MODULE_CODE_NAME . ' set in INDEX_MODULE is not exists!');
                 }
             }
         }
