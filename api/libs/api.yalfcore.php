@@ -454,7 +454,7 @@ class YALFCore {
         $allModules = scandir(MODULES_PATH);
         foreach ($allModules as $module) {
             if (!isset($disabledModules[$module])) {
-                if (is_readable(MODULES_PATH . $module . '/' . self::MODULE_DEFINITION)) {
+                if (file_exists(MODULES_PATH . $module . '/' . self::MODULE_DEFINITION)) {
                     include_once(MODULES_PATH . $module . '/' . self::MODULE_DEFINITION);
                 }
             }
