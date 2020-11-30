@@ -40,4 +40,9 @@ $lang['def']['Cant read file'] = 'Не могу прочитать файл';
 $lang['def']['File is not writable'] = 'Файл не доступен для записи';
 $lang['def']['Access denied'] = 'Доступ запрещен';
 $lang['def']['Authorization engine disabled'] = 'Механика авторизации отключена';
-
+$lang['def']['Check required PHP extensions'] = 'Проверка требуемых расширений PHP';
+$lang['def']['Deprecated in'] = 'Устарело в';
+$lang['def']['PHP extension not found'] = 'Расширение PHP не найдено';
+$lang['def']['PHP extension loaded'] = 'Расширение PHP загружено';
+$lang['def']['May require manual installation'] = 'Может потребовать ручной установки';
+$lang['def']['Information about PHP version'] = 'Информация о версии PHP';

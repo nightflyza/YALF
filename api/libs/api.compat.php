@@ -608,3 +608,15 @@ function int2ip($src) {
     $s1 = (int) ($src / 256);
     return sprintf('%d.%d.%d.%d', $s1, $src - 256 * $s1, $i2, $i1);
 }
+
+/**
+ * Returns exploded array of some multi-lined strings
+ * 
+ * @param string $data
+ * 
+ * @return array
+ */
+function explodeRows($data) {
+    $result = explode("\n", $data);
+    return ($result);
+}

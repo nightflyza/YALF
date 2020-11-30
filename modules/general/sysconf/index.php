@@ -5,7 +5,14 @@ if ($system->getAuthEnabled()) {
 
 
         $sysConf = new YalfSysConf();
-        show_window(__('Edit configs'), $sysConf->rendedControls());
+        show_window(__('Edit configs'), $sysConf->renderControls());
+
+        //just phpinfo() callback
+        if (ubRouting::checkGet($sysConf::ROUTE_PHPINFO)) {
+            phpinfo();
+            die();
+        }
+
         //save changes if required
         if (ubRouting::checkPost(array($sysConf::PROUTE_FILEPATH, $sysConf::PROUTE_FILECONTENT))) {
             $saveResult = $sysConf->saveFile();
