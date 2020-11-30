@@ -4,14 +4,21 @@
         <meta charset="utf-8" />
         <meta name="google" content="notranslate" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?=__($system->getPageTitle()); ?></title>
 
-        <link type="text/css" href="modules/jsc/jui/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
-        <script type="text/javascript" language="javascript" src="modules/jsc/dt/js/jquery.js"></script>
-        <script type="text/javascript" language="javascript" src="modules/jsc/jui/js/jquery-ui-1.8.23.custom.min.js"></script>
-        <link href="<?=$system->getSkinPath(); ?>ubilling.css" rel="stylesheet" />
-        <link href="<?=$system->getSkinPath(); ?>void.css" rel="stylesheet" />
-        
+        <!-- jQuery -->		
+        <script type="text/javascript" language="javascript" src="modules/jsc/jquery/jquery.min.js"></script>
+        <!-- JQDT  -->
+        <style type="text/css" title="currentStyle">
+            @import "modules/jsc/dt3/css/jquery.dataTables_themeroller.css";
+            @import "modules/jsc/dt3/css/jquery.dataTables.ub.css";
+        </style>
+
+        <!-- jQuery UI -->
+        <link type="text/css" href="modules/jsc/jui3/jquery-ui.css" rel="stylesheet" />
+        <script type="text/javascript" language="javascript" src="modules/jsc/jui3/jquery-ui.min.js"></script>
+
 
         <!-- JQDT  -->
         <style type="text/css" title="currentStyle">
@@ -19,6 +26,16 @@
             @import "modules/jsc/dt3/css/jquery.dataTables.ub.css";
         </style>
         <script type="text/javascript" src="modules/jsc/dt3/datatables.min.js"></script>
+
+        <!-- timepicker -->
+        <script type="text/javascript" src="modules/jsc/timepick/jquery.timepicker.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="modules/jsc/timepick/jquery.timepicker.css" />
+
+
+        <!-- Base styles -->
+        <link href="<?=$system->getSkinPath(); ?>ubilling.css" rel="stylesheet" />
+        <link href="<?=$system->getSkinPath(); ?>void.css" rel="stylesheet" />
+
     </head>
     <body>
         <div class="logo">
@@ -27,7 +44,7 @@
         <div class="navigation">
             <ul class="nav">
                 <?=$system->renderMenu(false); ?> 
-                
+
                 <?php 
                 if ($system->getAuthEnabled()) {
                 if ($system->getLoggedInState()) {
@@ -54,7 +71,6 @@
         </div>
 
 
-        <link type="text/css" href="modules/jsc/jui/css/smoothness/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
-        <script type="text/javascript" language="javascript" src="modules/jsc/jui/js/jquery-ui-1.8.23.custom.min.js"></script>
+
     </body>
 </html>
