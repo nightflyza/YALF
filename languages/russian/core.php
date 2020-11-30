@@ -38,4 +38,6 @@ $lang['def']['Application title here'] = 'Заголовок приложени�
 $lang['def']['File not exists'] = 'Файл не существует';
 $lang['def']['Cant read file'] = 'Не могу прочитать файл';
 $lang['def']['File is not writable'] = 'Файл не доступен для записи';
+$lang['def']['Access denied'] = 'Доступ запрещен';
+$lang['def']['Authorization engine disabled'] = 'Механика авторизации отключена';
 
