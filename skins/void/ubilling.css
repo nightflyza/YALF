@@ -651,3 +651,20 @@ sub, sup {
     margin: 8px;
     width: 60%;
 } 
+
+.fileeditorarea {
+    background-color: #000000;
+    color: #DEE3E7;
+    font-size: larger;
+    max-width: 95%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.fileeditorarea:hover {
+    background-color: #000000;
+    color: #DEE3E7;
+    font-size: larger;
+}

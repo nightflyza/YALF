@@ -19,8 +19,8 @@ dirty magic class ;)
 }
 
 .row5 {
-    
- 
+
+
 }
 
 .row5:hover {
@@ -126,7 +126,7 @@ dirty magic class ;)
     border-radius: 28px;
     font-family: Arial;
     color: #ffffff;
-   
+
     padding: 10px 20px 10px 20px;
     text-decoration: none;
     margin: 20%;
@@ -472,7 +472,7 @@ sub, sup {
 }
 
 .resp-table {
-   word-break:break-all;
+    word-break:break-all;
 }
 
 
@@ -635,3 +635,20 @@ sub, sup {
     margin: 8px;
     width: 60%;
 } 
+
+.fileeditorarea {
+    background-color: #000000;
+    color: #DEE3E7;
+    font-size: larger;
+    max-width: 95%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.fileeditorarea:hover {
+    background-color: #000000;
+    color: #DEE3E7;
+    font-size: larger;
+}

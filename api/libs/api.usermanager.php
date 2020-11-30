@@ -64,7 +64,7 @@ class UserManager {
     /**
      * Inits system messages helper for further usage
      * 
-     * @return
+     * @return void
      */
     protected function initMessages() {
         $this->messages = new UbillingMessageHelper();

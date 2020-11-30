@@ -32,4 +32,10 @@ $lang['def']['SQL console'] = 'SQL консоль';
 $lang['def']['PHP console'] = 'PHP консоль';
 $lang['def']['Run SQL query'] = 'Виконати SQL запит';
 $lang['def']['Run PHP code'] = 'Виконати PHP код';
+$lang['def']['System settings'] = 'Налаштування системи';
+$lang['def']['Edit configs'] = 'Редагування конфігів';
+$lang['def']['Application title here'] = 'Заголовок додатку тут';
+$lang['def']['File not exists'] = 'Файл не існує';
+$lang['def']['Cant read file'] = 'Не можу прочитати файл';
+$lang['def']['File is not writable'] = 'Файл не доступний для запису';
 
