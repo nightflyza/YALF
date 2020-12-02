@@ -620,3 +620,59 @@ function explodeRows($data) {
     $result = explode("\n", $data);
     return ($result);
 }
+
+
+/**
+ * Initializes file download procedure
+ * 
+ * @param string $filePath
+ * @param string $contentType
+ * @throws Exception
+ */
+function zb_DownloadFile($filePath, $contentType = '') {
+    if (!empty($filePath)) {
+        if (file_exists($filePath)) {
+            log_register("DOWNLOAD FILE `" . $filePath . "`");
+
+            if (($contentType == '') OR ( $contentType == 'default')) {
+                $contentType = 'application/octet-stream';
+            } else {
+                //additional content types
+                if ($contentType == 'docx') {
+                    $contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                }
+
+                if ($contentType == 'csv') {
+                    $contentType = 'text/csv; charset=Windows-1251';
+                }
+
+                if ($contentType == 'text') {
+                    $contentType = 'text/plain;';
+                }
+
+                if ($contentType == 'jpg') {
+                    $contentType = 'Content-Type: image/jpeg';
+                }
+            }
+
+            header('Content-Type: ' . $contentType);
+            header("Content-Transfer-Encoding: Binary");
+            header("Content-disposition: attachment; filename=\"" . basename($filePath) . "\"");
+            header("Content-Description: File Transfer");
+            header("Content-Length: " . filesize($filePath));
+
+            flush(); // this doesn't really matter.
+            $fp = fopen($filePath, "r");
+            while (!feof($fp)) {
+                echo fread($fp, 65536);
+                flush(); // this is essential for large downloads
+            }
+            fclose($fp);
+            die();
+        } else {
+            throw new Exception('DOWNLOAD_FILEPATH_NOT_EXISTS');
+        }
+    } else {
+        throw new Exception('DOWNLOAD_FILEPATH_EMPTY');
+    }
+}
