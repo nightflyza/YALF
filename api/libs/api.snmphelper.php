@@ -48,18 +48,38 @@ class SNMPHelper {
     protected $retriesNative = 1;
 
     /**
+     * Debugging mode flag
+     *
+     * @var bool
+     */
+    protected $debug = false;
+
+    /**
      * Native PHP snmp functions timeout
      * @var int
      */
     protected $timeoutNative = 1000000;
 
+    /**
+     * some predefined constants, paths, exceptiongs etc
+     */
     const CACHE_PATH = 'exports/'; //raw SNMP data cache path
     const EX_NOT_IMPL = 'NOT_IMPLEMENTED_MODE'; //not yet implemented SNMP mode exception
     const EX_WRONG_DATA = 'WRONG_DATA_FORMAT_RECEIVED';
+    const OPTION_DEBUG = 'SNMP_DEBUG_MODE';
+    const LOG_OIDS = 'exports/snmpdebug_oids.log';
+    const LOG_COMMANDS = 'exports/snmpdebug_commands.log';
 
-    public function __construct() {
+    /**
+     * Creates new SNMPHelper instance
+     * 
+     * @param bool $debugMode
+     */
+    public function __construct($debugMode = false) {
         $this->loadAlter();
         $this->setOptions();
+        //overrides system debug option state if declared obviously in constructor
+        $this->setDebug($debugMode);
     }
 
     /**
@@ -86,6 +106,24 @@ class SNMPHelper {
             $this->cacheTime = ($this->altCfg['SNMPCACHE_TIME'] * 60); //in minutes
             $this->pathWalk = $this->altCfg['SNMPWALK_PATH'];
             $this->pathSet = $this->altCfg['SNMPSET_PATH'];
+            if (isset($this->altCfg[self::OPTION_DEBUG])) {
+                if ($this->altCfg[self::OPTION_DEBUG]) {
+                    $this->setDebug(true);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets instance debug mode state
+     * 
+     * @param bool $state
+     * 
+     * @return void
+     */
+    protected function setDebug($state) {
+        if ($state) {
+            $this->debug = $state;
         }
     }
 
@@ -144,6 +182,7 @@ class SNMPHelper {
         $cachetime = time() - $this->cacheTime;
         $cachepath = self::CACHE_PATH;
         $cacheFile = $cachepath . $ip . '_' . $oid;
+        $updateCache = true;
         $result = '';
         if ($this->background) {
             $command = $command . ' > ' . $cacheFile . '&';
@@ -153,20 +192,33 @@ class SNMPHelper {
         if (file_exists($cacheFile)) {
             //cache not expired
             if ((filemtime($cacheFile) > $cachetime) AND ( $cache == true)) {
-                $result = file_get_contents($cacheFile);
+                $updateCache = false;
             } else {
                 //cache expired - refresh data
-                $result = shell_exec($command);
-                if (!$this->background) {
-                    file_put_contents($cacheFile, $result);
-                }
+                $updateCache = true;
             }
         } else {
             //no cached file exists
+            $updateCache = true;
+        }
+
+        //getting some results
+        if ($updateCache) {
+            //getting fresh data
             $result = shell_exec($command);
+            if ($this->debug) {
+                //writing some log
+                $date = date("Y-m-d H:i:s");
+                $commandLog = '# ' . $date . PHP_EOL;
+                $commandLog .= $command . PHP_EOL;
+                file_put_contents(self::LOG_COMMANDS, $commandLog, FILE_APPEND);
+            }
             if (!$this->background) {
                 file_put_contents($cacheFile, $result);
             }
+        } else {
+            //getting data from cache
+            $result = file_get_contents($cacheFile);
         }
 
         return ($result);
@@ -198,7 +250,7 @@ class SNMPHelper {
                 @$raw = snmpwalkoid($ip, $community, $oid, $this->timeoutNative, $this->retriesNative);
                 if (!empty($raw)) {
                     foreach ($raw as $oid => $value) {
-                        $result.=$oid . ' = ' . $value . "\n";
+                        $result .= $oid . ' = ' . $value . "\n";
                     }
                 } else {
                     @$value = snmpget($ip, $community, $oid, $this->timeoutNative, $this->retriesNative);
@@ -213,7 +265,7 @@ class SNMPHelper {
 
             if (!empty($raw)) {
                 foreach ($raw as $oid => $value) {
-                    $result.=$oid . ' = ' . $value . "\n";
+                    $result .= $oid . ' = ' . $value . "\n";
                 }
             } else {
                 @$value = snmpget($ip, $community, $oid, $this->timeoutNative, $this->retriesNative);
@@ -256,7 +308,7 @@ class SNMPHelper {
 
                 if (!empty($raw)) {
                     foreach ($raw as $oid => $value) {
-                        $result.=$oid . ' = ' . $value . "\n";
+                        $result .= $oid . ' = ' . $value . "\n";
                     }
                 }
                 file_put_contents($cacheFile, $result);
@@ -270,7 +322,7 @@ class SNMPHelper {
 
             if (!empty($raw)) {
                 foreach ($raw as $oid => $value) {
-                    $result.=$oid . ' = ' . $value . "\n";
+                    $result .= $oid . ' = ' . $value . "\n";
                 }
             }
 
@@ -296,13 +348,13 @@ class SNMPHelper {
                 $command = $this->pathSet . ' -c ' . $community . ' ' . $ip . ' ';
                 foreach ($data as $io => $each) {
                     if (isset($each['oid']) AND ( isset($each['type']) AND ( isset($each['value'])))) {
-                        $command.=' ' . $each['oid'] . ' ' . $each['type'] . ' ' . $each['value'];
+                        $command .= ' ' . $each['oid'] . ' ' . $each['type'] . ' ' . $each['value'];
                     } else {
                         throw new Exception(self::EX_WRONG_DATA);
                     }
                 }
 
-                $result.= shell_exec($command);
+                $result .= shell_exec($command);
             } else {
                 throw new Exception(self::EX_WRONG_DATA);
             }
@@ -326,7 +378,7 @@ class SNMPHelper {
                     if (isset($each['oid']) AND ( isset($each['type']) AND ( isset($each['value'])))) {
                         @$pushResult = snmp2_set($ip, $community, $each['oid'], $each['type'], $each['value'], $this->timeoutNative, $this->retriesNative);
                         if ($pushResult) {
-                            $result.=trim($this->snmpWalkNative($ip, $community, $each['oid'], false)) . "\n";
+                            $result .= trim($this->snmpWalkNative($ip, $community, $each['oid'], false)) . "\n";
                         }
                     } else {
                         throw new Exception(self::EX_WRONG_DATA);
@@ -338,8 +390,8 @@ class SNMPHelper {
         }
         return ($result);
     }
-    
-     /**
+
+    /**
      * Executes PHP 5.4 SNMP set interface
      * 
      * @param string $ip
@@ -354,12 +406,11 @@ class SNMPHelper {
                 foreach ($data as $io => $each) {
                     if (isset($each['oid']) AND ( isset($each['type']) AND ( isset($each['value'])))) {
                         $session = new SNMP(SNMP::VERSION_2c, $ip, $community, $this->timeoutNative, $this->retriesNative);
-                        @$pushResult = $session->set($each['oid'],$each['type'],$each['value']);
+                        @$pushResult = $session->set($each['oid'], $each['type'], $each['value']);
                         $session->close();
                         if ($pushResult) {
-                            $result.=trim($this->snmpWalkClass($ip, $community, $each['oid'], false)) . "\n";
+                            $result .= trim($this->snmpWalkClass($ip, $community, $each['oid'], false)) . "\n";
                         }
-                     
                     } else {
                         throw new Exception(self::EX_WRONG_DATA);
                     }
@@ -369,6 +420,24 @@ class SNMPHelper {
             }
         }
         return ($result);
+    }
+
+    /**
+     * Put some messages to logs if debug mode is enabled
+     * 
+     * @param string $ip
+     * @param string $community
+     * @param string $oid
+     * @param string $type
+     * 
+     * @return void
+     */
+    protected function oidLog($ip, $community, $oid, $type = 'walk') {
+        if ($this->debug) {
+            $date = date("Y-m-d H:i:s");
+            $oidLog = $date . ' snmp' . $type . ' host: ' . $ip . ' community: ' . $community . ' OID: ' . $oid . PHP_EOL;
+            file_put_contents(self::LOG_OIDS, $oidLog, FILE_APPEND);
+        }
     }
 
     /**
@@ -399,6 +468,7 @@ class SNMPHelper {
                 throw new Exception(self::EX_NOT_IMPL);
         }
 
+        $this->oidLog($ip, $community, $oid);
         return ($result);
     }
 
@@ -434,9 +504,8 @@ class SNMPHelper {
             default :
                 throw new Exception(self::EX_NOT_IMPL);
         }
+        $this->oidLog($ip, $community, $oid, 'set');
         return ($result);
     }
 
 }
-
-?>
