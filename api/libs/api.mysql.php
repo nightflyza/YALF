@@ -10,23 +10,41 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Debug on/off flag
+ * Debug mode on/off here
  */
-define("DEBUG", 0);
+define('SQL_DEBUG_LOG', 'exports/sqldebug.log');
+$mysqlDatabaseConfig = @parse_ini_file('config/mysql.ini');
+$mysqlDebugBuffer = array();
 $query_counter = 0;
 $ubillingDatabaseDriver = 'none';
+define('SQL_DEBUG_QUERY_EOL', 'UBSQEOL');
+
+if (@$mysqlDatabaseConfig['debug']) {
+    switch ($mysqlDatabaseConfig['debug']) {
+        case 1:
+            define('SQL_DEBUG', 1);
+            break;
+        case 2:
+            define('SQL_DEBUG', 2);
+            break;
+    }
+} else {
+    define('SQL_DEBUG', 0);
+}
 
 if (!extension_loaded('mysql')) {
     $ubillingDatabaseDriver = 'mysqli';
     /**
      * MySQLi database layer
      */
-    if (!($db_config = @parse_ini_file('config/' . 'mysql.ini'))) {
+    if (!($db_config = @parse_ini_file('config/mysql.ini'))) {
         print('Cannot load mysql configuration');
         exit;
     }
 
-    $loginDB = new mysqli($db_config['server'], $db_config['username'], $db_config['password'], $db_config['db']);
+    $dbport = (empty($db_config['port'])) ? 3306 : $db_config['port'];
+
+    $loginDB = new mysqli($db_config['server'], $db_config['username'], $db_config['password'], $db_config['db'], $dbport);
 
     if ($loginDB->connect_error) {
         die('Connection error (' . $loginDB->connect_errno . ') '
@@ -76,8 +94,8 @@ if (!extension_loaded('mysql')) {
      */
     function simple_queryall($query) {
         global $loginDB, $query_counter;
-        if (DEBUG) {
-            print ($query . "\n");
+        if (SQL_DEBUG) {
+            zb_SqlDebugOutput($query);
         }
         $result = array();
         $queried = $loginDB->query($query) or die('wrong data input: ' . $query);
@@ -97,8 +115,8 @@ if (!extension_loaded('mysql')) {
      */
     function simple_query($query) {
         global $loginDB, $query_counter;
-        if (DEBUG) {
-            print ($query . "\n");
+        if (SQL_DEBUG) {
+            zb_SqlDebugOutput($query);
         }
         $queried = $loginDB->query($query) or die('wrong data input: ' . $query);
         $result = mysqli_fetch_assoc($queried);
@@ -155,8 +173,8 @@ if (!extension_loaded('mysql')) {
      */
     function nr_query($query) {
         global $loginDB, $query_counter;
-        if (DEBUG) {
-            print ($query . "\n");
+        if (SQL_DEBUG) {
+            zb_SqlDebugOutput($query);
         }
         $queried = $loginDB->query($query) or die('wrong data input: ' . $query);
         $query_counter++;
@@ -209,7 +227,9 @@ if (!extension_loaded('mysql')) {
                     return false;
                 }
 
-                $this->connection = @mysql_connect($this->db_config['server'], $this->db_config['username'], $this->db_config['password']);
+                $dbport = (empty($this->db_config['port'])) ? 3306 : $this->db_config['port'];
+
+                $this->connection = @mysql_connect($this->db_config['server'] . ':' . $dbport, $this->db_config['username'], $this->db_config['password']);
             }
 
             if (empty($this->connection)) {
@@ -288,14 +308,14 @@ if (!extension_loaded('mysql')) {
         }
 
         /**
-         * Prints MySQL error message; swithing DEBUG, prints MySQL error description or sends it to administrator
+         * Prints MySQL error message; switching DEBUG, prints MySQL error description or sends it to administrator
          *
          * @return void
          */
         public function db_error($show = 0, $query = '') {
             global $system;
             if (!in_array(mysql_errno(), array(1062, 1065, 1191))) { // Errcodes in array are handled at another way :)
-                if (DEBUG == 1 || $show == 1) {
+                if (SQL_DEBUG == 1 || $show == 1) {
                     $warning = '<br><b>' . ('MySQL Error') . ':</b><br><i>';
                     $warning .= mysql_errno() . ' : ' . mysql_error() . (empty($query) ? '</i>' : '<br>In query: <textarea cols="50" rows="7">' . $query . '</textarea></i>');
                     print($warning) or print($warning);
@@ -343,8 +363,8 @@ if (!extension_loaded('mysql')) {
      */
     function simple_queryall($query) {
         global $query_counter;
-        if (DEBUG) {
-            print ($query . "\n");
+        if (SQL_DEBUG) {
+            zb_SqlDebugOutput($query);
         }
         $result = '';
         $queried = mysql_query($query) or die('wrong data input: ' . $query);
@@ -365,8 +385,8 @@ if (!extension_loaded('mysql')) {
      */
     function simple_query($query) {
         global $query_counter;
-        if (DEBUG) {
-            print ($query . "\n");
+        if (SQL_DEBUG) {
+            zb_SqlDebugOutput($query);
         }
         $queried = mysql_query($query) or die('wrong data input: ' . $query);
         $result = mysql_fetch_assoc($queried);
@@ -423,8 +443,8 @@ if (!extension_loaded('mysql')) {
      */
     function nr_query($query) {
         global $query_counter;
-        if (DEBUG) {
-            print ($query . "\n");
+        if (SQL_DEBUG) {
+            zb_SqlDebugOutput($query);
         }
         $queried = mysql_query($query) or die('wrong data input: ' . $query);
         $query_counter++;
@@ -434,46 +454,66 @@ if (!extension_loaded('mysql')) {
     //creating mysql connection object instance
     $db = new MySQLDB();
 }
-
 if (!function_exists('vf')) {
-
-    /**
-     * Returns cutted down data entry 
-     *  Available modes:
-     *  1 - digits, letters
-     *  2 - only letters
-     *  3 - only digits
-     *  4 - digits, letters, "-", "_", "."
-     *  5 - current lang alphabet + digits + punctuation
-     *  default - filter only blacklist chars
-     *
-     * @param string $data
-     * @param int $mode
-     * 
-     * @return string
-     */
-    function vf($data, $mode = 0) {
-        switch ($mode) {
+/**
+ * Returns cutted down data entry 
+ *  Available modes:
+ *  1 - digits, letters
+ *  2 - only letters
+ *  3 - only digits
+ *  4 - digits, letters, "-", "_", "."
+ *  5 - current lang alphabet + digits + punctuation
+ *  default - filter only blacklist chars
+ *
+ * @param string $data
+ * @param int $mode
+ * 
+ * @return string
+ */
+function vf($data, $mode = 0) {
+    switch ($mode) {
+        case 1:
+            return preg_replace("#[^a-z0-9A-Z]#Uis", '', $data); // digits, letters
+            break;
+        case 2:
+            return preg_replace("#[^a-zA-Z]#Uis", '', $data); // letters
+            break;
+        case 3:
+            return preg_replace("#[^0-9]#Uis", '', $data); // digits
+            break;
+        case 4:
+            return preg_replace("#[^a-z0-9A-Z\-_\.]#Uis", '', $data); // digits, letters, "-", "_", "."
+            break;
+        case 5:
+            return preg_replace("#[^ [:punct:]" . ('a-zA-Z') . "0-9]#Uis", '', $data); // current lang alphabet + digits + punctuation
+            break;
+        default:
+            return preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $data); // black list anyway
+            break;
+    }
+}
+}
+/**
+ * Performs MySQL API debug output if enabled
+ * 
+ * @param string $data
+ * 
+ * @return void
+ */
+function zb_SqlDebugOutput($data) {
+    global $mysqlDebugBuffer;
+    if (SQL_DEBUG) {
+        switch (SQL_DEBUG) {
             case 1:
-                return preg_replace("#[^a-z0-9A-Z]#Uis", '', $data); // digits, letters
+                $timestamp = curdatetime();
+                $cleanData = trim($data);
+                $logData = $timestamp . ' ' . $cleanData;
+                $mysqlDebugBuffer[] = $logData;
+                file_put_contents(SQL_DEBUG_LOG, $logData . SQL_DEBUG_QUERY_EOL . PHP_EOL, FILE_APPEND);
                 break;
             case 2:
-                return preg_replace("#[^a-zA-Z]#Uis", '', $data); // letters
-                break;
-            case 3:
-                return preg_replace("#[^0-9]#Uis", '', $data); // digits
-                break;
-            case 4:
-                return preg_replace("#[^a-z0-9A-Z\-_\.]#Uis", '', $data); // digits, letters, "-", "_", "."
-                break;
-            case 5:
-                return preg_replace("#[^ [:punct:]" . ('a-zA-Z') . "0-9]#Uis", '', $data); // current lang alphabet + digits + punctuation
-                break;
-            default:
-                return preg_replace("#[~@\+\?\%\/\;=\*\>\<\"\'\-]#Uis", '', $data); // black list anyway
+                print($data . PHP_EOL);
                 break;
         }
     }
-
 }
-?>

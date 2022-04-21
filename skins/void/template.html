@@ -68,6 +68,7 @@
             print(' QC: ' . $query_counter);
             ?> 
             <? if (XHPROF) { print($xhprof_link); } ?> 
+            <? if (defined('SQL_DEBUG')) { print(web_SqlDebugIconShow()); }?>
         </div>
 
 
