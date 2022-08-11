@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Universal Telegram bot hooks extendable class
+ * Universal Telegram bot hooks processing extendable class
  */
 class WolfDispatcher {
 
@@ -20,6 +20,13 @@ class WolfDispatcher {
     protected $commands = array();
 
     /**
+     * Group chats commands array which overrides normal actions only for group chats
+     *
+     * @var array
+     */
+    protected $groupChatCommands = array();
+
+    /**
      * Contains text reactions=>actions mappings
      *
      * @var array
@@ -32,6 +39,13 @@ class WolfDispatcher {
      * @var array
      */
     protected $ignoredChatIds = array();
+
+    /**
+     * Contains administrator users chatIds as chatId=>index
+     *
+     * @var array
+     */
+    protected $adminChatIds = array();
 
     /**
      * Array of chatIds which is allowed for actions execution. Ignored if empty.
@@ -104,9 +118,28 @@ class WolfDispatcher {
     protected $calledActions = array();
 
     /**
+     * Contains current bot instance class name as is 
+     *
+     * @var string
+     */
+    protected $botImplementation = '';
+
+    /**
+     * Web-hook automatic installation flag
+     *
+     * @var bool
+     */
+    protected $hookAutoSetup = false;
+
+    /**
      * Contains default debug log path
      */
     const LOG_PATH = 'exports/';
+
+    /**
+     * Contains path to save web hooks PIDs due autosetup.
+     */
+    const HOOK_PID_PATH = 'exports/';
 
     /**
      * Creates new dispatcher instance
@@ -119,11 +152,22 @@ class WolfDispatcher {
         if (!empty($token)) {
             $this->botToken = $token;
         }
+
         $this->initTelegram();
+        $this->setBotName();
     }
 
     /**
-     * Instance debugging flag setter
+     * Sets current bot instance implementation property
+     * 
+     * @return void
+     */
+    protected function setBotName() {
+        $this->botImplementation = get_class($this);
+    }
+
+    /**
+     * Instance debugging flag setter. Debug log: exports/botname_debug.log
      * 
      * @param bool $state
      * 
@@ -165,7 +209,7 @@ class WolfDispatcher {
     /**
      * Sets new dispatcher actions dataset
      * 
-     * @param array $commands
+     * @param array $commands dataset as text input=>method or function name
      * 
      * @return void
      */
@@ -178,9 +222,35 @@ class WolfDispatcher {
     }
 
     /**
-     * Sets new dispatcher text reactions dataset
+     * Sets group commands data set
+     * If not empty data set its overrides all default actions for not private chats
      * 
-     * @param array $commands
+     * @param array $groupCommands dataset as text input=>method or function name
+     * 
+     * @return void
+     */
+    public function setGroupActions($groupCommands) {
+        $this->groupChatCommands = $groupCommands;
+    }
+
+    /**
+     * Sets administrative user chatIDs
+     * 
+     * @param array $chatIds
+     * 
+     * @return void
+     */
+    public function setAdminChatId($chatIds) {
+        if (!empty($chatIds)) {
+            $chatIds = array_flip($chatIds);
+            $this->adminChatIds = $chatIds;
+        }
+    }
+
+    /**
+     * Sets new dispatcher text reactions dataset. Basic setActions dataset overrides this.
+     * 
+     * @param array $commands dataset as text input=>method or function name
      * 
      * @return void
      */
@@ -195,7 +265,7 @@ class WolfDispatcher {
     /**
      * Sets method name which will be executed on any image input
      * 
-     * @param string $name
+     * @param string $name existing method name to process received images
      * 
      * @return void
      */
@@ -226,7 +296,7 @@ class WolfDispatcher {
     /**
      * Sets allowed chat IDs for this instance
      * 
-     * @param array $chatIds
+     * @param array $chatIds chatIds which only allowed to interract this bot instance
      * 
      * @return void
      */
@@ -241,7 +311,7 @@ class WolfDispatcher {
     /**
      * Sets denied chat IDs for this instance
      * 
-     * @param array $chatIds
+     * @param array $chatIds chatIds which is denied from interraction with this instance
      * 
      * @return void
      */
@@ -436,7 +506,7 @@ class WolfDispatcher {
         if ($this->debugFlag) {
             $nowmtime = explode(' ', microtime());
             $wtotaltime = $nowmtime[0] + $nowmtime[1] - $starttime;
-            $logData = curdatetime() . PHP_EOL;
+            $logData = $this->botImplementation . ': ' . curdatetime() . PHP_EOL;
             $logData .= print_r($this->receivedData, true) . PHP_EOL;
             $logData .= 'GT: ' . round($wtotaltime, 4) . ' QC: ' . $query_counter . PHP_EOL;
             if (!empty($this->calledActions)) {
@@ -445,7 +515,7 @@ class WolfDispatcher {
                 $logData .= PHP_EOL . 'Called actions: NONE' . PHP_EOL;
             }
             $logData .= '==================' . PHP_EOL;
-            $logFileName = get_class($this) . '.log';
+            $logFileName = strtolower($this->botImplementation) . '_debug.log';
             file_put_contents(self::LOG_PATH . $logFileName, $logData, FILE_APPEND);
         }
     }
@@ -456,10 +526,21 @@ class WolfDispatcher {
      * @return array
      */
     public function listen() {
+        //may be automatic setup required?
+        $this->installWebHook();
+        //is something here?
         $this->receivedData = $this->telegram->getHookData();
         if (!empty($this->receivedData)) {
             @$this->chatId = $this->receivedData['chat']['id'];
             @$this->messageId = $this->receivedData['message_id'];
+            //wow, some separate group commands here. They overrides all another actions.
+            if (!empty($this->groupChatCommands)) {
+                $chatType = $this->receivedData['chat']['type'];
+                if ($chatType != 'private') {
+                    //override actions with another set
+                    $this->setActions($this->groupChatCommands);
+                }
+            }
             $this->reactInput();
         }
         $this->writeDebugLog();
@@ -522,11 +603,30 @@ class WolfDispatcher {
     }
 
     /**
+     * Checks is current user chatId listed as administrator? 
+     * Always return true, if adminChatIds is empty.
+     * 
+     * @return bool
+     */
+    protected function isAdmin() {
+        $result = false;
+        if (!empty($this->adminChatIds)) {
+            if (isset($this->adminChatIds[$this->chatId])) {
+                $result = true;
+            }
+        } else {
+            $result = true;
+        }
+
+        return($result);
+    }
+
+    /**
      * Returns received image file content
      * 
      * @return mixed
      */
-    public function getPhoto() {
+    protected function getPhoto() {
         $result = '';
         $filePath = '';
         $fileId = '';
@@ -562,7 +662,7 @@ class WolfDispatcher {
      * 
      * @return string/void
      */
-    public function savePhoto($savePath) {
+    protected function savePhoto($savePath) {
         $result = '';
         if (!empty($savePath)) {
             if ($this->isPhotoReceived()) {
@@ -618,6 +718,56 @@ class WolfDispatcher {
             }
         }
         return($result);
+    }
+
+    /**
+     * Enables or disables web-hook automatic installation
+     * 
+     * @param bool $enabled
+     * 
+     * @return void
+     */
+    public function hookAutosetup($enabled = true) {
+        $this->hookAutoSetup = $enabled;
+    }
+
+    /**
+     * Registers new web-hook URL for bot if isnt registered yet.
+     *
+     * @return void
+     */
+    protected function installWebHook() {
+        if ($this->hookAutoSetup) {
+            $listenerUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/' . $_SERVER['REQUEST_URI'];
+            $tokenHash = md5($this->botToken . $listenerUrl);
+            $hookPidName = self::HOOK_PID_PATH . $this->botImplementation . $tokenHash . '.hook';
+            //need to be installed?
+            if (!file_exists($hookPidName)) {
+                $hookInfo = json_decode($this->telegram->getWebHookInfo(), true);
+                if ($hookInfo['result']['url'] != $listenerUrl) {
+                    //need to be installed new URL
+                    $this->telegram->setWebHook($listenerUrl, 100);
+                    show_success($this->botImplementation . ' web-hook URL: ' . $hookInfo['result']['url']);
+                } else {
+                    //already set, but no PID
+                    show_warning($this->botImplementation . ' web-hook URL: ' . $hookInfo['result']['url']);
+                }
+                //write hook pid
+                file_put_contents($hookPidName, $listenerUrl);
+                //some logging
+                if ($this->debugFlag) {
+                    $logFileName = strtolower($this->botImplementation) . '_debug.log';
+                    $logData = $this->botImplementation . ': ' . curdatetime() . PHP_EOL;
+                    $logData .= 'INSTALLED WEB HOOK: ' . $listenerUrl . PHP_EOL;
+                    $logData .= 'HOOK PID: ' . $hookPidName . PHP_EOL;
+                    file_put_contents(self::LOG_PATH . $logFileName, $logData,FILE_APPEND);
+                }
+            } else {
+                //ok, hook is already installed
+                $currentHookUrl = file_get_contents($hookPidName);
+                show_info($this->botImplementation . ' web-hook URL: ' . $currentHookUrl);
+            }
+        }
     }
 
 }
