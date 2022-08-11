@@ -26,6 +26,7 @@ class UserManager {
     const ROUTE_DELETE = 'deleteuser';
     const ROUTE_EDIT = 'edituserdata';
     const ROUTE_PERMISSIONS = 'edituserpermissions';
+    const ROUTE_NEWUSER = 'registernewuser';
 
     /**
      * New user parameters here
@@ -113,7 +114,8 @@ class UserManager {
         }
 
         $result .= wf_delimiter();
-        $result .= wf_modalAuto(web_add_icon() . ' ' . __('Register new user'), __('Register new user'), $this->renderRegisterForm(), 'ubButton');
+
+        $result .= wf_Link(self::URL_ME . '&' . self::ROUTE_NEWUSER . '=true', web_add_icon() . ' ' . __('Register new user'), false, 'ubButton');
         return($result);
     }
 
@@ -122,7 +124,7 @@ class UserManager {
      * 
      * @return string
      */
-    protected function renderRegisterForm() {
+    public function renderRegisterForm() {
         $result = '';
 
         $inputs = wf_HiddenInput(self::PROUTE_DOREGISTER, 'true');
@@ -341,7 +343,7 @@ class UserManager {
                             }
                         }
 
-                        
+
 
                         //new user state is "have root permisssions"
                         if ($newRootState) {

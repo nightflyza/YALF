@@ -41,7 +41,7 @@ if ($system->getAuthEnabled()) {
             }
         }
 
-        if (!ubRouting::checkGet($userManager::ROUTE_EDIT) AND ! ubRouting::checkGet($userManager::ROUTE_PERMISSIONS)) {
+        if (!ubRouting::checkGet($userManager::ROUTE_EDIT) AND ! ubRouting::checkGet($userManager::ROUTE_PERMISSIONS) AND ! ubRouting::checkGet($userManager::ROUTE_NEWUSER)) {
             //rendering existing users list
             show_window(__('Available users'), $userManager->renderUsersList());
         } else {
@@ -55,6 +55,12 @@ if ($system->getAuthEnabled()) {
             //rendering user permissions edit interface
             if (ubRouting::checkGet($userManager::ROUTE_PERMISSIONS)) {
                 show_window(__('Edit user permissions') . ' ' . ubRouting::get($userManager::ROUTE_PERMISSIONS), $userManager->renderPermissionsForm(ubRouting::get($userManager::ROUTE_PERMISSIONS)));
+                show_window('', wf_BackLink($userManager::URL_ME));
+            }
+
+            //rendering new user creation form
+            if (ubRouting::checkGet($userManager::ROUTE_NEWUSER)) {
+                show_window(__('Register new user'), $userManager->renderRegisterForm());
                 show_window('', wf_BackLink($userManager::URL_ME));
             }
         }
