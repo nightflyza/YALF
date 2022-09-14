@@ -113,7 +113,7 @@ class StarDust {
     }
 
     /**
-     * Checks is process name not ampty and valid for setting/getting locks?
+     * Checks is process name not empty and valid for setting/getting locks?
      * 
      * @return bool
      * @throws Exception
@@ -291,8 +291,8 @@ class StarDust {
     }
 
 //
-//               ⠀   (\__/)
-//                   (•ㅅ•)      SONO CHI NO SADAME
+//                 ⠀   (\__/)
+//                     (•ㅅ•)      SONO CHI NO SADAME
 //                 ＿ノヽ  ノ＼＿   
 //             `/　`/ ⌒Ｙ⌒ Ｙ  ヽ
 //             ( 　(三ヽ人　 /　  |
