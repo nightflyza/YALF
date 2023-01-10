@@ -835,7 +835,7 @@ class YALFCore {
 
         if (!$this->loggedIn AND $this->checkUserData($username, $password, 'user_login', false, $userdata)) {
             // OK... Let's allow user to log in :)
-            setcookie($this->cookie_user, $username . ':' . $userdata['password'], ($remember) ? time() + 3600 * 24 * 365 : null);
+            setcookie($this->cookie_user, $username . ':' . $userdata['password'], ($remember) ? time() + 3600 * 24 * 365 : 0);
             $_COOKIE[$this->cookie_user] = $username . ':' . $userdata['password'];
             $this->initializeUser(true);
             return (true);
