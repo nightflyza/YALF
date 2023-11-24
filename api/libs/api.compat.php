@@ -497,7 +497,6 @@ function web_bar($count, $total) {
  * @return float
  */
 function zb_Percent($sum, $percent) {
-    // и не надо ржать, я реально не могу запомнить чего куда делить и умножать
     $result = $percent / 100 * $sum;
     return ($result);
 }
@@ -790,4 +789,156 @@ function zb_ParseTagData($openTag, $closeTag, $stringToParse = '', $mutipleResul
         }
     }
     return($result);
+}
+
+/**
+ * Renders time duration in seconds into formatted human-readable view
+ *      
+ * @param int $seconds
+ * 
+ * @return string
+ */
+function zb_formatTime($seconds) {
+    $init = $seconds;
+    $days = floor($seconds / 86400);
+    $hours = floor(round($seconds / 3600));
+    $minutes = floor(round(($seconds / 60)) % 60);
+    $seconds = (round($seconds) % 60);
+
+    if ($init < 3600) {
+//less than 1 hour
+        if ($init < 60) {
+//less than minute
+            $result = $seconds . ' ' . __('sec.');
+        } else {
+//more than one minute
+            $result = $minutes . ' ' . __('minutes') . ' ' . $seconds . ' ' . __('seconds');
+        }
+    } else {
+        if ($init < 86400) {
+//more than hour
+            $result = $hours . ' ' . __('hour') . ' ' . $minutes . ' ' . __('minutes') . ' ' . $seconds . ' ' . __('seconds');
+        } else {
+            $hoursLeft = $hours - ($days * 24);
+            $result = $days . ' ' . __('days') . ' ' . $hoursLeft . ' ' . __('hour') . ' ' . $minutes . ' ' . __('minutes') . ' ' . $seconds . ' ' . __('seconds');
+        }
+    }
+    return ($result);
+}
+
+/**
+ * Renders time duration in seconds into formatted human-readable view without seconds
+ *      
+ * @param int $seconds
+ * 
+ * @return string
+ */
+function wr_formatTimeArchive($seconds) {
+    $init = $seconds;
+    $days = floor($seconds / 86400);
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds / 60) % 60);
+    $seconds = $seconds % 60;
+
+    if ($init < 3600) {
+//less than 1 hour
+        if ($init < 60) {
+//less than minute
+            $result = $seconds . ' ' . __('sec.');
+        } else {
+//more than one minute
+            $result = $minutes . ' ' . __('minutes');
+        }
+    } else {
+        if ($init < 86400) {
+//more than hour
+            $result = $hours . ' ' . __('hour') . ' ' . $minutes . ' ' . __('minutes');
+        } else {
+            $hoursLeft = $hours - ($days * 24);
+            $result = $days . ' ' . __('days') . ' ' . $hoursLeft . ' ' . __('hour') . ' ' . $minutes . ' ' . __('minutes');
+        }
+    }
+    return ($result);
+}
+
+/**
+ * Validate a Gregorian date 
+ * 
+ * @param string $date Date in MySQL format
+ * @return bool
+ */
+function zb_checkDate($date) {
+    $explode = explode('-', $date);
+    @$year = $explode[0];
+    @$month = $explode[1];
+    @$day = $explode[2];
+    $result = @checkdate($month, $day, $year);
+    return ($result);
+}
+
+/**
+ * Checks is time between some other time ranges?
+ * 
+ * @param string $fromTime start time (format hh:mm OR hh:mm:ss with seconds)
+ * @param string $toTime end time
+ * @param string $checkTime time to check
+ * @param bool $seconds 
+ * 
+ * @return bool
+ */
+function zb_isTimeBetween($fromTime, $toTime, $checkTime, $seconds = false) {
+    if ($seconds) {
+        $formatPostfix = ':s';
+    } else {
+        $formatPostfix = '';
+    }
+    $checkTime = strtotime($checkTime);
+    $checkTime = date("H:i" . $formatPostfix, $checkTime);
+    $f = DateTime::createFromFormat('!H:i' . $formatPostfix, $fromTime);
+    $t = DateTime::createFromFormat('!H:i' . $formatPostfix, $toTime);
+    $i = DateTime::createFromFormat('!H:i' . $formatPostfix, $checkTime);
+    if ($f > $t) {
+        $t->modify('+1 day');
+    }
+    return ($f <= $i && $i <= $t) || ($f <= $i->modify('+1 day') && $i <= $t);
+}
+
+/**
+ * Checks is date between some other date ranges?
+ * 
+ * @param string $fromDate start date (format Y-m-d)
+ * @param string $toDate end date
+ * @param string $checkDate date to check
+ * @param bool $seconds 
+ * 
+ * @return bool
+ */
+function zb_isDateBetween($fromDate, $toDate, $checkDate) {
+    $result = false;
+    $fromDate = strtotime($fromDate);
+    $toDate = strtotime($toDate);
+    $checkDate = strtotime($checkDate);
+    $checkDate = date("Y-m-d", $checkDate);
+    $checkDate = strtotime($checkDate);
+    if ($checkDate >= $fromDate AND $checkDate <= $toDate) {
+        $result = true;
+    }
+    return($result);
+}
+
+/**
+ * Checks is timestamp between some other time ranges?
+ * 
+ * @param int $fromTime start time
+ * @param int $toTime end time
+ * @param int $checkTime time to check
+ * 
+ * @return bool
+ */
+function zb_isTimeStampBetween($fromTime, $toTime, $checkTime) {
+    $result = false;
+    if ($checkTime >= $fromTime AND $checkTime <= $toTime) {
+        $result = true;
+    }
+    return ($result);
 }
