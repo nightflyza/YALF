@@ -470,6 +470,24 @@ function months_array_wz() {
 }
 
 /**
+ * Allocates array with full timeline as hh:mm=>0
+ * 
+ * @return array
+ */
+function allocDayTimeline() {
+    $result = array();
+    for ($h = 0; $h <= 23; $h++) {
+        for ($m = 0; $m < 60; $m++) {
+            $hLabel = ($h > 9) ? $h : '0' . $h;
+            $mLabel = ($m > 9) ? $m : '0' . $m;
+            $timeLabel = $hLabel . ':' . $mLabel;
+            $result[$timeLabel] = 0;
+        }
+    }
+    return($result);
+}
+
+/**
  * Returns visual bar with count/total proportional size
  * 
  * @param float $count
