@@ -45,7 +45,7 @@ if ($system->getAuthEnabled()) {
                 $result = '';
                 $result .= wf_Link(self::URL_ME, wf_img('skins/icon_restoredb.png') . ' ' . __('SQL console'), false, 'ubButton') . ' ';
                 $result .= wf_Link(self::URL_ME . '&' . self::ROUTE_PHPCON . '=true', wf_img('skins/icon_php.png') . ' ' . __('PHP console'), false, 'ubButton') . ' ';
-                return($result);
+                return ($result);
             }
 
             /**
@@ -58,7 +58,7 @@ if ($system->getAuthEnabled()) {
                 $inputs = wf_TextArea(self::PROUTE_QUERY, '', '', true, '80x10');
                 $inputs .= wf_Submit(__('Run SQL query'));
                 $result .= wf_Form('', 'POST', $inputs, 'glamour');
-                return($result);
+                return ($result);
             }
 
             /**
@@ -71,7 +71,7 @@ if ($system->getAuthEnabled()) {
                 $inputs = wf_TextArea(self::PROUTE_CODE, '', '', true, '80x10');
                 $inputs .= wf_Submit(__('Run PHP code'));
                 $result .= wf_Form('', 'POST', $inputs, 'glamour');
-                return($result);
+                return ($result);
             }
 
             /**
@@ -93,6 +93,7 @@ if ($system->getAuthEnabled()) {
 
                 if (!empty($query)) {
                     if (!extension_loaded('mysql')) {
+                        mysqli_report(0);
                         $resultRaw = mysqli_query($loginDB, $query);
                     } else {
                         $resultRaw = mysql_query($query);
@@ -103,8 +104,11 @@ if ($system->getAuthEnabled()) {
                         $result .= $this->messages->getStyledMessage(__('Wrong query') . ': ' . $query, 'error');
                     } else {
                         if (!extension_loaded('mysql')) {
-                            while (@$row = mysqli_fetch_assoc($resultRaw)) {
-                                $query_result[] = $row;
+                            mysqli_report(0);
+                            if ($resultRaw !== true) {
+                                while (@$row = mysqli_fetch_assoc($resultRaw)) {
+                                    $query_result[] = $row;
+                                }
                             }
                         } else {
                             while (@$row = mysql_fetch_assoc($resultRaw)) {
@@ -130,9 +134,8 @@ if ($system->getAuthEnabled()) {
                 } else {
                     $result .= $this->messages->getStyledMessage(__('Empty query'), 'error');
                 }
-                return($result);
+                return ($result);
             }
-
         }
 
         $console = new DevConsole();
@@ -166,7 +169,11 @@ if ($system->getAuthEnabled()) {
                 $stripcode = substr($code, 0, 70) . '..';
                 log_register('DEVCONSOLE ' . $stripcode);
                 ob_start();
-                eval($code);
+                try {
+                    eval($code);
+                } catch (ParseError $e) {
+                    show_error(__('Error') . ':' . $e);
+                }
                 $debugData = ob_get_contents();
                 ob_end_clean();
 
