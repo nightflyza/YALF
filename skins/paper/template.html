@@ -42,7 +42,8 @@
                         <?php 
                         if ($system->getAuthEnabled()) {
                          if ($system->getLoggedInState()) {
-                            print(wf_tag('li').wf_link('?forceLogout=true',wf_img('skins/poweroff.png').' '.__('Log out'))).wf_tag('li',true);
+                            $ghostModeIcon=(@$_COOKIE['yalf_ghost'])? ' '.wf_img('skins/ghost.png',__('in ghost mode')) : '';
+                            print(wf_tag('li').wf_link('?forceLogout=true',wf_img('skins/poweroff.png').' '.__('Log out').$ghostModeIcon)).wf_tag('li',true);
                            }
                         }
                         ?>
