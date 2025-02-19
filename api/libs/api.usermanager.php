@@ -444,32 +444,5 @@ class UserManager {
         return ($result);
     }
 
-    /**
-     * Inits ghost mode for some administrator login
-     * 
-     * @param string $adminLogin
-     * 
-     * @return void
-     */
-    public function initGhostMode($adminLogin) {
-        global $system;
-        if (cfr('ROOT')) {
-            if (file_exists(USERS_PATH . $adminLogin)) {
-                $userData = $system->getUserData($adminLogin);
-                if (!empty($userData)) {
-                    $cookieGhost = $system->getCookieGhost();
-                    $cookieAuth = $system->getCookieUser();
-                    $myLogin = whoami();
-                    $myData = $system->getUserData($myLogin);
-                    //current login data is used for ghost mode identification
-                    setcookie($cookieGhost, $myLogin . ':' . $myData['password'], 0);
-                    $_COOKIE[$cookieGhost] = $myLogin . ':' . $myData['password'];
-                    //login of another admin
-                    log_register('GHOSTMODE {' . $myLogin . '} LOGIN AS {' . $adminLogin . '}');
-                    setcookie($cookieAuth, $adminLogin . ':' . $userData['password'], 0);
-                    $_COOKIE[$cookieAuth] = $adminLogin . ':' . $userData['password'];
-                }
-            }
-        }
-    }
+ 
 }
