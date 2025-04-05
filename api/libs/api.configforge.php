@@ -6,8 +6,24 @@
  * This class provides functionality to load, edit, and save configuration files
  * based on a specification file.
  * available types: TEXT, CHECKBOX, RADIO, SELECT, TRIGGER, PASSWORD, SLIDER
- * available patterns: geo, mobile, finance, ip, net-cidr, digits, email, alpha, alphanumeric,
- *                     mac, float, login, url, sigint
+ * available patterns for TEXT type:
+ * - alpha: only Latin letters [a-zA-Z] (e.g., "abcDEF")
+ * - alphanumeric: only Latin letters and numbers [a-zA-Z0-9] (e.g., "abc123")
+ * - digits: only digits [0-9] (e.g., "12345")
+ * - email: valid email address format (e.g., "user@domain.com")
+ * - finance: decimal numbers with optional decimal point (e.g., "123.45", "100", "0.99")
+ * - float: floating point numbers (e.g., "123.45", "0.001")
+ * - fullpath: absolute Unix-style paths starting with / (e.g., "/var/www/html")
+ * - geo: geographic coordinates (e.g., "40.7143528,-74.0059731")
+ * - ip: IPv4 address format (e.g., "192.168.1.1")
+ * - login: username format with letters, numbers and underscore (e.g., "user_123")
+ * - mac: MAC address format with : or - separator (e.g., "00:1A:2B:3C:4D:5E")
+ * - mobile: phone number with optional country code (e.g., "+380501234567")
+ * - net-cidr: network CIDR notation, mask can't be /31 (e.g., "192.168.1.0/24")
+ * - path: relative or absolute Unix-style paths (e.g., "dir/file.txt", "/etc/config")
+ * - pathorurl: URLs with optional ports or paths (e.g., "http://example.com:8080", "some/dir/")
+ * - sigint: signed integers (e.g., "-123", "456")
+ * - url: HTTP/HTTPS URLs with optional port numbers (e.g., "http://example.com:8080")
  * 
  * Specification file example:  
  * 
@@ -23,6 +39,7 @@
  * TYPE=SELECT
  * VALUES="male,female,unknown"
  * DEFAULT="unknown"
+ * SAVEFILTER="gigasafe"
  * 
  * [sectionname3]
  * LABEL="Option label 2"
@@ -30,7 +47,16 @@
  * TYPE=TEXT
  * PATTERN="mac"
  * VALIDATOR="IsMacValid"
+ * ONINVALID="This mac address is invalid"
  * DEFAULT="14:88:92:94:94:61"
+ * 
+ * [sectionname4]
+ * LABEL="Volume level"
+ * OPTION=VOLUME
+ * VALUES="0..100"
+ * TYPE=SLIDER
+ * DEFAULT=50
+ * 
  * 
  * class usage example:
  *     $configPath = 'config/test.ini';
@@ -39,7 +65,7 @@
  *   $processResult = $forge->process();
  *   if (!empty($processResult)) {
  *       show_error($processResult);
- *   } elseif (ubRouting::checkPost(ConfigForge::FORM_SUBMIT_KEY)) {
+ *   } elseif (ubRouting::post(ConfigForge::FORM_SUBMIT_KEY)==$forge->getInstanceId()) {
  *       ubRouting::nav('?module=testing');
  *   }
  *    
@@ -253,6 +279,11 @@ class ConfigForge {
                         $value = $value ? $values[0] : $values[1];
                     }
 
+                    // Optional pre-save filter
+                    if (isset($props['SAVEFILTER'])) {
+                        $value=ubRouting::filters($value,$props['SAVEFILTER']);
+                    }
+
                     // Escape all non-numeric values (except 0 and 1) with quotes, but only if not empty
                     if (!is_numeric($value) and $value !== '0' and $value !== '1' and !empty($value)) {
                         $value = '"' . $value . '"';
@@ -423,7 +454,6 @@ class ConfigForge {
                             break;
 
                         case 'PASSWORD':
-                            $pattern = (!empty($sectionData['PATTERN'])) ? $sectionData['PATTERN'] : '';
                             $result .= wf_PasswordInput($uniqueInputName, $labelText, $currentValue, false, '', false);
                             $result .= wf_delimiter(0);
                             break;
@@ -633,22 +663,37 @@ class ConfigForge {
                 // Validate value if validator exists
                 if (!empty($props['VALIDATOR'])) {
                     $validator = $props['VALIDATOR'];
+                    $validatorPassed = false;
+
+                    // Default validation error notice
+                    $onInvalidMessage = __('Validation failed for') . ' ' . $option;
+
+                    // Or custom one
+                    if (!empty($props['ONINVALID'])) {
+                        $onInvalidMessage = __($props['ONINVALID']);
+                    }
 
                     // Check if validator is a method in this class
                     if (method_exists($this, $validator)) {
                         if (!$this->$validator($value)) {
-                            return (__('Validation failed for') . ' ' . $option);
+                            return ($onInvalidMessage);
+                        } else {
+                            $validatorPassed = true;
                         }
                     }
+
                     // Check if validator is a global function
-                    else if (function_exists($validator)) {
+                    if (function_exists($validator)) {
                         if (!$validator($value)) {
-                            return (__('Validation failed for') . ' ' . $option);
+                            return ($onInvalidMessage);
+                        } else {
+                            $validatorPassed = true;
                         }
                     }
-                    // If validator exists but neither method nor function found
-                    else {
-                        return (__('Validator not found') . ': ' . $validator . ' ' . __('for option') . ' ' . $option);
+
+                    // If validator set but neither method nor function found
+                    if (!$validatorPassed) {
+                        return (__('Validator method not found') . ': ' . $validator . ' ' . __('for option') . ' ' . $option);
                     }
                 }
 
