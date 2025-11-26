@@ -11,9 +11,9 @@ $failedLibs = array();
 $allLibsToCheck = array();
 
 
-if (ubRouting::optionCliCheck('main', false)) {
+if (ubRouting::optionCliCheck('run', false)) {
 
-    if (ubRouting::optionCliCheck('main', false)) {
+    if (ubRouting::optionCliCheck('run', false)) {
         $mainLibsToCheck = rcms_scandir($baseLibsPath . $mainLibsPath, '*.php');
         if (!empty($mainLibsToCheck)) {
             foreach ($mainLibsToCheck as $index=>$eachUbLib) {
@@ -56,5 +56,5 @@ if (ubRouting::optionCliCheck('main', false)) {
         print('✨ Everything is Ok' . PHP_EOL);
     }
 } else {
-    print('ℹ️ Usage: php syntaxcheck.php --[main]' . PHP_EOL);
+    print('ℹ️ Usage: php syntaxcheck.php --[run]' . PHP_EOL);
 }
