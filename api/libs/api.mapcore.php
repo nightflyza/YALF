@@ -102,6 +102,34 @@ class MapCore {
      */
     protected $rememberPosition=false;
 
+    /**
+     * Remember last used layer
+     *
+     * @var bool
+     */
+    protected $rememberLayer=false;
+
+    /**
+     * Enables FPS meter overlay control
+     *
+     * @var bool
+     */
+    protected $fpsMeterEnabled = false;
+
+    /**
+     * FPS meter refresh interval in milliseconds
+     *
+     * @var int
+     */
+    protected $fpsMeterInterval = 1000;
+
+    /**
+     * FPS meter control position
+     *
+     * @var string
+     */
+    protected $fpsMeterPosition = 'bottomleft';
+
       /**
      * Canonical icon key => image path
      *
@@ -137,6 +165,27 @@ class MapCore {
      */
     protected $additionalAttributions='';
 
+    /**
+     * Custom Leaflet tile layer URL template, empty means default OSM
+     *
+     * @var string
+     */
+    protected $tileLayer = '';
+
+    /**
+     * Raw JS options appended to base L.tileLayer (subdomains, tms, etc.)
+     *
+     * @var string
+     */
+    protected $tileLayerCustoms = '';
+
+    /**
+     * Enables canvas rendering for vector layers (Leaflet preferCanvas)
+     *
+     * @var bool
+     */
+    protected $canvasRender = false;
+
 
     /**
      * Creates map builder instance
@@ -145,25 +194,118 @@ class MapCore {
      */
     public function __construct($container = 'ubmap') {
         global $ubillingConfig;
-        $this->container = $container;
+        $this->setContainerName($container);
         if (is_object($ubillingConfig)) {
             $this->mapsCfg = $ubillingConfig->getYmaps();
         }
+        $this->loadConfigOptions();
+    }
+
+ 
+    /**
+     * Loads ymaps.ini options into object properties
+     *
+     * @return void
+     */
+    protected function loadConfigOptions() {
+        $this->preprocessTileLayerOpts();
+
+        if (isset($this->mapsCfg['CANVAS_RENDER'])) {
+            if ($this->mapsCfg['CANVAS_RENDER']) {
+                $this->canvasRender = true;
+            } else {
+                $this->canvasRender = false;
+            }
+        }
+
+        if (isset($this->mapsCfg['METRICS_ENABLED'])) {
+            if ($this->mapsCfg['METRICS_ENABLED']) {
+                $this->fpsMeterEnabled = true;
+            } else {
+                $this->fpsMeterEnabled = false;
+            }
+        }
+
+        if (isset($this->mapsCfg['REMEMBER_LAYER'])) {
+            if ($this->mapsCfg['REMEMBER_LAYER']) {
+                $this->rememberLayer = true;
+            } else {
+                $this->rememberLayer = false;
+            }
+        }
+    }
+
+    /**
+     * Preprocesses tile layer options from maps config: custom tile URL, Leaflet options, attributions
+     *
+     * @return void
+     */
+    protected function preprocessTileLayerOpts() {
+        if (isset($this->mapsCfg['LEAFLET_TILE_LAYER'])) {
+            $tileLayer = trim((string) $this->mapsCfg['LEAFLET_TILE_LAYER']);
+            if (!empty($tileLayer)) {
+                $this->tileLayer = $tileLayer;
+                if (ispos($tileLayer, 'visicom')) {
+                    $this->tileLayerCustoms = "subdomains: '123', tms: true";
+                    $this->additionalAttributions = '| <a href="https://www.visicom.ua">Visicom</a>';
+                } else {
+                    if (ispos($tileLayer, 'google.com')) {
+                        $this->tileLayerCustoms = "subdomains:['mt0','mt1','mt2','mt3']";
+                        $this->additionalAttributions = '| <a href="https://www.google.com">Google</a>';
+                    }
+                }
+                if (ispos($tileLayer, 'kaminari')) {
+                    $this->additionalAttributions = '| ⚡ <a href="https://github.com/nightflyza/kaminaritile">KaminariTile</a>';
+                }
+                if (ispos($tileLayer, 'mapbox')) {
+                    $this->additionalAttributions = '| <a href="https://www.mapbox.com">Mapbox</a>';
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Sets container/instance name
+     *
+     * @param string $containerName - name of container
+     *
+     * @return void
+     */
+    public function setContainerName($containerName) {
+        $this->container = $containerName;
     }
 
     /**
      * Creates map container markup
      *
-     * @param string $width
-     * @param string $height
+     * @param string $width - width of container in pixels or percentage
+     * @param string $height - height of container in pixels or percentage
+     * @param string $class - class of container
+     * @param string $options - additional raw options for container
      *
      * @return string
      */
-    public function renderContainer($width, $height) {
+    public function renderContainer($width = '100%', $height = '700px', $class = '', $options = '') {
         $result = '';
-        $mapWidth = (!empty($width)) ? $width : '100%';
-        $mapHeight = (!empty($height)) ? $height : '800px';
-        $result .= wf_tag('div', false, '', 'id="' . $this->container . '" style="width:' . $mapWidth . '; height:' . $mapHeight . ';"');
+        $classId='mapcore_style_'.wf_InputId();
+        $containerClass = $classId;
+        if (!empty($class)) {
+            $containerClass .= ' ' . $class;
+        }
+      
+        $containerParams = 'id="' . $this->container . '"';
+        if (!empty($options)) {
+            $containerParams .= ' ' . trim($options);
+        }
+
+        $customStyle = wf_tag('style', false);
+        $customStyle .= '.' . $classId . ' {';
+        $customStyle .= 'width: ' . $width . '; height: ' . $height . ';}';
+        $customStyle .=wf_tag('style', true);
+        
+        $result .= $customStyle;
+        $result .= wf_tag('div', false, $containerClass, $containerParams);
         $result .= wf_tag('div', true);
         return ($result);
     }
@@ -171,7 +313,7 @@ class MapCore {
     /**
      * Sets map center
      *
-     * @param string $center
+     * @param string $center - "lat,lng" coordinates of map center
      *
      * @return object
      */
@@ -183,7 +325,7 @@ class MapCore {
     /**
      * Sets map zoom
      *
-     * @param int $zoom
+     * @param int $zoom - zoom level
      *
      * @return object
      */
@@ -195,7 +337,7 @@ class MapCore {
     /**
      * Enables or disables saving/restoring map zoom via localStorage
      *
-     * @param bool $rememberZoom
+     * @param bool $rememberZoom - true to enable saving/restoring map zoom via localStorage
      *
      * @return object
      */
@@ -211,7 +353,7 @@ class MapCore {
     /**
      * Enables or disables saving/restoring map center via localStorage
      *
-     * @param bool $rememberPosition
+     * @param bool $rememberPosition - true to enable saving/restoring map center via localStorage
      *
      * @return object
      */
@@ -225,9 +367,25 @@ class MapCore {
     }
 
     /**
+     * Enables or disables saving/restoring last used base layer via localStorage
+     *
+     * @param bool $rememberLayer - true to enable saving/restoring last used base layer
+     *
+     * @return object
+     */
+    public function setRememberLayer($rememberLayer = true) {
+        if ($rememberLayer) {
+            $this->rememberLayer = true;
+        } else {
+            $this->rememberLayer = false;
+        }
+        return ($this);
+    }
+
+    /**
      * Sets initial base layer type
      *
-     * @param string $type
+     * @param string $type - type of map (map, satellite, hybrid, terrain)
      *
      * @return object
      */
@@ -243,7 +401,7 @@ class MapCore {
     /**
      * Sets geocoder search prefill
      *
-     * @param string $searchPrefill
+     * @param string $searchPrefill - text to prefill search box
      *
      * @return object
      */
@@ -335,8 +493,8 @@ class MapCore {
     /**
      * Injects raw map placemarks JS into map object
      *
-     * @param string $placemarks
-     * @param bool $replace
+     * @param string $placemarks - raw JS code to inject
+     * @param bool $replace - replace existing placemarks with new ones
      *
      * @return object
      */
@@ -356,7 +514,7 @@ class MapCore {
      *
      * @return object
      */
-    public function enableClustering($enabled = true, $options = array()) {
+    public function setClustering($enabled = true, $options = array()) {
         if ($enabled) {
             $this->clusteringEnabled = true;
         } else {
@@ -385,12 +543,41 @@ class MapCore {
     }
 
     /**
+     * Enables or disables FPS meter control on map
+     *
+     * @param bool $enabled
+     * @param int $intervalMs - meter refresh interval in milliseconds
+     * @param string $position - topright|topleft|bottomright|bottomleft
+     *
+     * @return object
+     */
+    public function setFpsMeter($enabled = true, $intervalMs = 1000, $position = 'bottomleft') {
+        if ($enabled) {
+            $this->fpsMeterEnabled = true;
+        } else {
+            $this->fpsMeterEnabled = false;
+        }
+        $intervalMs = (int) $intervalMs;
+        if ($intervalMs < 100) {
+            $intervalMs = 100;
+        }
+        $this->fpsMeterInterval = $intervalMs;
+        $position = trim((string) $position);
+        if ($position == 'topright' or $position == 'topleft' or $position == 'bottomright' or $position == 'bottomleft') {
+            $this->fpsMeterPosition = $position;
+        } else {
+            $this->fpsMeterPosition = 'bottomleft';
+        }
+        return ($this);
+    }
+
+    /**
      * Adds location editor with coordinates picker and custom HTML form
      *
-     * @param string $fieldName
-     * @param string $title
-     * @param string $formHtml
-     * @param int $precision
+     * @param string $fieldName - name of field to store coordinates
+     * @param string $title - title of editor
+     * @param string $formHtml - HTML form to display in popup
+     * @param int $precision - precision of coordinates (number of decimal places)
      *
      * @return object
      */
@@ -455,19 +642,17 @@ class MapCore {
     /**
      * Adds marker to map
      *
-     * Supported options:
+     * @param string $coords - "lat,lng" format
+     * @param string $popupContent - popup content
+     * @param array $options - Supported options:
      * - icon: canonical icon key, also you can use custom icon by registering it with registerIcon method
      * - tooltip: marker tooltip text - will be shown on mouseover
      * - popupTitle: popup title - will be shown in popup
      * - popupFooter: popup footer - will be shown in popup
      *
-     * @param string $coords "lat,lng" format
-     * @param string $popupContent popup content
-     * @param array $options  
-     *
      * @return object
      */
-    public function addMarker($coords, $popupContent, $options = array()) {
+    public function addMarker($coords, $popupContent = '', $options = array()) {
         $markerId = wf_InputId();
         $icon = isset($options['icon']) ? $options['icon'] : 'marker.blue';
         $tooltip = isset($options['tooltip']) ? $options['tooltip'] : '';
@@ -496,10 +681,12 @@ class MapCore {
     /**
      * Adds marker with lazy AJAX popup loading
      *
-     * @param string $coords
-     * @param string $title
-     * @param string $contentUrl
-     * @param array $options
+     * @param string $coords - "lat,lng" coordinates of marker
+     * @param string $title - title of marker
+     * @param string $contentUrl - URL of content to load for popup
+     * @param array $options - Supported options:
+     * - icon: canonical icon key, also you can use custom icon by registering it with registerIcon method
+     * - tooltip: marker tooltip text - will be shown on mouseover
      *
      * @return object
      */
@@ -557,10 +744,15 @@ class MapCore {
     /**
      * Adds map circle
      *
-     * @param string $coords
-     * @param int $radius
-     * @param string $popupContent
-     * @param array $options
+     * @param string $coords - "lat,lng" coordinates of center of circle
+     * @param int $radius - radius in meters
+     * @param string $popupContent - content of popup window
+     * @param array $options - Supported options:
+     * - color: stroke color hex without # (default: 009d25)
+     * - opacity: stroke opacity 0..1 (default: 0.8)
+     * - fillColor: fill color hex without # (default: 00a20b)
+     * - fillOpacity: fill opacity 0..1 (default: 0.5)
+     * - hint: tooltip text shown on mouseover
      *
      * @return object
      */
@@ -595,9 +787,12 @@ class MapCore {
     /**
      * Adds line between two points
      *
-     * @param string $coord1
-     * @param string $coord2
-     * @param array $options
+     * @param string $coord1 - first point "lat,lng"
+     * @param string $coord2 - second point "lat,lng"
+     * @param array $options - Supported options:
+     * - color: stroke color hex without # (default: 000000)
+     * - width: stroke width in pixels (default: 1)
+     * - hint: tooltip text shown on mouseover
      *
      * @return object
      */
@@ -626,18 +821,16 @@ class MapCore {
     /**
      * Adds polyline (open multipoint line) to map
      *
-     * Supported options:
-     * - color: stroke color (default: #000000)
+     * @param array $points - array of "lat,lng" strings
+     * @param string $popupContent - content of popup window
+     * @param array $options - Supported options:
+     * - color: stroke color hex without # (default: 000000)
      * - weight: stroke width in pixels (default: 2)
      * - opacity: stroke opacity 0..1 (default: 0.8)
      * - smoothFactor: line smoothing factor (default: 1)
      * - dashArray: SVG dash pattern, e.g. "5,5"
      * - hint: tooltip text shown on mouseover
      * - popupTitle: popup title shown above popup content
-     *
-     * @param array $points array of "lat,lng" strings
-     * @param string $popupContent
-     * @param array $options
      *
      * @return object
      */
@@ -684,7 +877,9 @@ class MapCore {
     /**
      * Adds polygon (closed multipoint shape) to map
      *
-     * Supported options:
+     * @param array $points - array of "lat,lng" strings
+     * @param string $popupContent - content of popup window
+     * @param array $options - Supported options:
      * - color: stroke color hex without # (default: 009d25)
      * - weight: stroke width in pixels (default: 2)
      * - opacity: stroke opacity 0..1 (default: 0.8)
@@ -693,10 +888,6 @@ class MapCore {
      * - dashArray: SVG dash pattern, e.g. "5,5"
      * - hint: tooltip text shown on mouseover
      * - popupTitle: popup title shown above popup content
-     *
-     * @param array $points array of "lat,lng" strings
-     * @param string $popupContent
-     * @param array $options
      *
      * @return object
      */
@@ -745,7 +936,10 @@ class MapCore {
     /**
      * Adds rectangle to map. Rectangle is defined by two opposite corners (south-west and north-east)
      *
-     * Supported options:
+     * @param string $cornerSW - first corner "lat,lng" (south-west)
+     * @param string $cornerNE - second corner "lat,lng" (north-east)
+     * @param string $popupContent - content of popup window
+     * @param array $options - Supported options:
      * - color: stroke color hex without # (default: 009d25)
      * - weight: stroke width in pixels (default: 2)
      * - opacity: stroke opacity 0..1 (default: 0.8)
@@ -754,11 +948,6 @@ class MapCore {
      * - dashArray: SVG dash pattern, e.g. "5,5"
      * - hint: tooltip text shown on mouseover
      * - popupTitle: popup title shown above popup content
-     *
-     * @param string $cornerSW first corner "lat,lng" (south-west)
-     * @param string $cornerNE second corner "lat,lng" (north-east)
-     * @param string $popupContent
-     * @param array $options
      *
      * @return object
      */
@@ -806,7 +995,10 @@ class MapCore {
     /**
      * Adds circle marker (a circle with fixed pixel radius that does not scale with zoom)
      *
-     * Supported options:
+     * @param string $coords - "lat,lng" position
+     * @param int $radius circle radius in pixels (default: 10)
+     * @param string $popupContent - content of popup window
+     * @param array $options - Supported options:
      * - color: stroke color hex without # (default: 009d25)
      * - weight: stroke width in pixels (default: 2)
      * - opacity: stroke opacity 0..1 (default: 0.8)
@@ -814,11 +1006,6 @@ class MapCore {
      * - fillOpacity: fill opacity 0..1 (default: 0.5)
      * - hint: tooltip text shown on mouseover
      * - popupTitle: popup title shown above popup content
-     *
-     * @param string $coords "lat,lng" position
-     * @param int $radius circle radius in pixels (default: 10)
-     * @param string $popupContent
-     * @param array $options
      *
      * @return object
      */
@@ -1091,28 +1278,11 @@ class MapCore {
         $searchCode = '';
         $rememberZoomJs = ($this->rememberZoom) ? 'true' : 'false';
         $rememberPositionJs = ($this->rememberPosition) ? 'true' : 'false';
+        $rememberLayerJs = ($this->rememberLayer) ? 'true' : 'false';
 
-        if (isset($this->mapsCfg['LEAFLET_TILE_LAYER'])) {
-            if ($this->mapsCfg['LEAFLET_TILE_LAYER']) {
-                $tileLayerOSM = $this->mapsCfg['LEAFLET_TILE_LAYER'];
-                if (ispos($tileLayerOSM, 'visicom')) {
-                    $tileLayerCustoms = "subdomains: '123', tms: true";
-                    $this->additionalAttributions = '| <a href="https://www.visicom.ua">Visicom</a>';
-                } else {
-                    if (ispos($tileLayerOSM, 'google.com')) {
-                        $tileLayerCustoms = "subdomains:['mt0','mt1','mt2','mt3']";
-                        $this->additionalAttributions = '| <a href="https://www.google.com">Google</a>';
-                    }
-                }
-
-                if (ispos($tileLayerOSM, 'kaminari')) {
-                    $this->additionalAttributions = '| ⚡ <a href="https://github.com/nightflyza/kaminaritile">KaminariTile</a>';
-                }
-
-                if (ispos($tileLayerOSM, 'mapbox')) {
-                    $this->additionalAttributions = '| <a href="https://www.mapbox.com">Mapbox</a>';
-                }
-            }
+        if (!empty($this->tileLayer)) {
+            $tileLayerOSM = $this->tileLayer;
+            $tileLayerCustoms = $this->tileLayerCustoms;
         }
 
         if (!empty($this->searchPrefill)) {
@@ -1124,12 +1294,7 @@ class MapCore {
             ';
         }
 
-        $canvasRender = 'false';
-        if (isset($this->mapsCfg['CANVAS_RENDER'])) {
-            if ($this->mapsCfg['CANVAS_RENDER']) {
-                $canvasRender = 'true';
-            }
-        }
+        $canvasRender = ($this->canvasRender) ? 'true' : 'false';
 
         $mapCenter = '';
         if (empty($this->center)) {
@@ -1175,14 +1340,17 @@ class MapCore {
         }
         $clusterEnabledJs = ($this->clusteringEnabled) ? 'true' : 'false';
         $forceCanvasMarkersJs = ($this->forceCanvasMarkers) ? 'true' : 'false';
+        $fpsMeterEnabledJs = ($this->fpsMeterEnabled) ? 'true' : 'false';
+        $fpsMeterIntervalJs = (int) $this->fpsMeterInterval;
+        $fpsMeterPositionJs = $this->quoteJs($this->fpsMeterPosition);
         $result .= wf_tag('script', false, '', 'type = "text/javascript"');
         $result .= '
             var map = L.map("' . $this->container . '", {maxZoom: 18});
-            var ubMapZoomStorageKey = "ubilling_lmaps_zoom_' . $this->container . '";
+            var ubMapZoomStorageKey = "ubMapCore_zoom_' . $this->container . '";
             var ubMapRememberZoom = ' . $rememberZoomJs . ';
             var ubMapRequestedZoom = ' . (int) $this->zoom . ';
             var ubMapInitialZoom = ubMapRequestedZoom;
-            var ubMapPositionStorageKey = "ubilling_lmaps_position_' . $this->container . '";
+            var ubMapPositionStorageKey = "ubMapCore_position_' . $this->container . '";
             var ubMapRememberPosition = ' . $rememberPositionJs . ';
             var ubMapRequestedCenter = ' . $this->quoteJs($this->center) . ';
             var ubMapInitialCenter = ubMapRequestedCenter;
@@ -1219,6 +1387,55 @@ class MapCore {
             } else {
             ' . $mapCenter . '
             }
+            if (!L.Control.Fps) {
+                L.Control.Fps = L.Control.extend({
+                    options: {
+                        position: ' . $fpsMeterPositionJs . ',
+                        interval: ' . $fpsMeterIntervalJs . '
+                    },
+                    onAdd: function(map) {
+                        this._map = map;
+                        this._container = L.DomUtil.create("div", "leaflet-control-fps");
+                        L.DomEvent.disableClickPropagation(this._container);
+                        this._container.style.padding = "5px";
+                        this._container.style.background = "rgba(255, 255, 255, 0.5)";
+                        this._container.style.color = "black";
+                        this._container.style.fontFamily = "monospace";
+                        this._container.style.fontSize = "11px";
+                        this._container.style.borderRadius = "3px";
+                        this._container.innerHTML = "FPS: ...";
+                        this._running = true;
+                        this._lastCalledTime = performance.now();
+                        this._frameCount = 0;
+                        this._animateBound = this._animate.bind(this);
+                        requestAnimationFrame(this._animateBound);
+                        return this._container;
+                    },
+                    onRemove: function() {
+                        this._running = false;
+                    },
+                    _animate: function() {
+                        if (!this._running) {
+                            return;
+                        }
+                        this._frameCount++;
+                        var now = performance.now();
+                        var diff = now - this._lastCalledTime;
+                        if (diff >= this.options.interval) {
+                            var fps = (this._frameCount * 1000) / diff;
+                            this._container.innerHTML = "FPS: " + Math.round(fps);
+                            this._lastCalledTime = now;
+                            this._frameCount = 0;
+                        }
+                        requestAnimationFrame(this._animateBound);
+                    }
+                });
+            }
+            if (!L.control.fps) {
+                L.control.fps = function(options) {
+                    return new L.Control.Fps(options);
+                };
+            }
             var ubMapIconCache = {};
             function ubMapGetCachedIcon(iconKey, iconUrl) {
                 if (!ubMapIconCache[iconKey]) {
@@ -1232,11 +1449,22 @@ class MapCore {
                 return ubMapIconCache[iconKey];
             }
             var ubForceCanvasMarkers = ' . $forceCanvasMarkersJs . ';
+            var ubClusterEnabled = ' . $clusterEnabledJs . ';
+            if (ubForceCanvasMarkers && ubClusterEnabled) {
+                if (window.console && typeof console.warn === "function") {
+                    console.warn("MapCore: canvas markers and clustering are both enabled; clustering is ignored because canvas markers mode is active.");
+                }
+            }
             var ubMarkerLayer = map;
             if (ubForceCanvasMarkers) {
                 if (typeof L.MarkersCanvas === "function" && typeof RBush === "function") {
-                    ubMarkerLayer = new L.MarkersCanvas();
+                    // Render canvas markers in markerPane to keep them above vector overlays.
+                    ubMarkerLayer = new L.MarkersCanvas({pane: "markerPane"});
                     ubMarkerLayer.addTo(map);
+                    if (ubMarkerLayer._canvas && ubMarkerLayer._canvas.style) {
+                        // Keep circles/polygons interactive under markerPane canvas layer.
+                        ubMarkerLayer._canvas.style.pointerEvents = "none";
+                    }
                 } else {
                     ubMarkerLayer = map;
                     if (window.console && typeof console.warn === "function") {
@@ -1244,7 +1472,7 @@ class MapCore {
                     }
                 }
             } else {
-                if (' . $clusterEnabledJs . ') {
+                if (ubClusterEnabled) {
                     if (typeof L.markerClusterGroup === "function") {
                         ubMarkerLayer = L.markerClusterGroup(' . $clusterOptionsJs . ');
                         map.addLayer(ubMarkerLayer);
@@ -1274,45 +1502,50 @@ class MapCore {
             var hybrid = L.tileLayer("' . $tileLayerHybrid . '", {maxZoom: 18, attribution: "© Google"});
             var terrain = L.tileLayer("' . $tileLayerTerrain . '", {maxZoom: 18, attribution: "© Google"});
 
-            var storageKey = "ubilling_lmaps_base_' . $this->container . '";
+            var ubMapRememberLayer = ' . $rememberLayerJs . ';
+            var ubMapLayerStorageKey = "ubMapCore_layer_' . $this->container . '";
             var savedLayerType = null;
-            try {
-                savedLayerType = window.localStorage ? localStorage.getItem(storageKey) : null;
-            } catch (err) {
-                savedLayerType = null;
-            }
-            var requestedLayerType = "' . $this->type . '";
-            var layerToUse = roadmap;
-            if (savedLayerType === "hybrid") {
-                layerToUse = hybrid;
-            } else {
-                if (savedLayerType === "satellite") {
-                    layerToUse = satellite;
-                } else {
-                    if (savedLayerType === "terrain") {
-                        layerToUse = terrain;
-                    } else {
-                        if (savedLayerType === "roadmap") {
-                            layerToUse = roadmap;
-                        } else {
-                            if (requestedLayerType === "hybrid") {
-                                layerToUse = hybrid;
-                            } else {
-                                if (requestedLayerType === "satellite") {
-                                    layerToUse = satellite;
-                                } else {
-                                    if (requestedLayerType === "terrain") {
-                                        layerToUse = terrain;
-                                    } else {
-                                        layerToUse = roadmap;
-                                    }
-                                }
-                            }
-                        }
-                    }
+            if (ubMapRememberLayer) {
+                try {
+                    savedLayerType = window.localStorage ? localStorage.getItem(ubMapLayerStorageKey) : null;
+                } catch (err) {
+                    savedLayerType = null;
                 }
             }
+            var ubMapBaseLayers = {roadmap: roadmap, hybrid: hybrid, satellite: satellite, terrain: terrain};
+            var requestedLayerType = "' . $this->type . '";
+            var layerToUse = ubMapBaseLayers[savedLayerType] || ubMapBaseLayers[requestedLayerType] || roadmap;
             layerToUse.addTo(map);
+            if (' . $fpsMeterEnabledJs . ') {
+                var ubMapCenter = map.getCenter();
+                var ubMapOptionsSnapshot = {
+                    canvasRender: ' . $canvasRender . ',
+                    forceCanvasMarkers: ubForceCanvasMarkers,
+                    clustering: ubClusterEnabled,
+                    rememberZoom: ubMapRememberZoom,
+                    rememberPosition: ubMapRememberPosition,
+                    rememberLayer: ubMapRememberLayer,
+                    requestedLayerType: requestedLayerType,
+                    savedLayerType: savedLayerType,
+                    activeLayerType: savedLayerType || requestedLayerType || "roadmap",
+                    zoom: map.getZoom(),
+                    center: ubMapCenter
+                };
+                window["ubMapOptions_' . $this->container . '"] = ubMapOptionsSnapshot;
+                if (window.console && typeof console.info === "function") {
+                    console.info(
+                        "[MapCore #' . $this->container . '] layer=" + ubMapOptionsSnapshot.activeLayerType +
+                        ", zoom=" + ubMapOptionsSnapshot.zoom +
+                        ", center=" + ubMapCenter.lat.toFixed(6) + "," + ubMapCenter.lng.toFixed(6) +
+                        ", canvasRender=" + ubMapOptionsSnapshot.canvasRender +
+                        ", forceCanvasMarkers=" + ubMapOptionsSnapshot.forceCanvasMarkers +
+                        ", clustering=" + ubMapOptionsSnapshot.clustering +
+                        ", rememberZoom=" + ubMapOptionsSnapshot.rememberZoom +
+                        ", rememberPosition=" + ubMapOptionsSnapshot.rememberPosition +
+                        ", rememberLayer=" + ubMapOptionsSnapshot.rememberLayer
+                    );
+                }
+            }
 
             var baseMaps = {
                 "' . __('Map') . '": roadmap,
@@ -1327,7 +1560,7 @@ class MapCore {
                 title: "' . __('Export') . '",
                 defaultSizeTitles: {Current: "' . __('Current') . '", A4Landscape: "A4 Landscape", A4Portrait: "A4 Portrait"},
                 position: "topright",
-                filename: "ubillingmap_' . date("Y-m-d_H:i:s") . '",
+                filename: "map_' . date("Y-m-d_H:i:s") . '",
                 exportOnly: true,
                 hideControlContainer: true,
                 sizeModes: ["Current", "A4Landscape", "A4Portrait"]
@@ -1350,6 +1583,9 @@ class MapCore {
                 }
             };
             L.control.ruler(options).addTo(map);
+            if (' . $fpsMeterEnabledJs . ') {
+                L.control.fps({position: ' . $fpsMeterPositionJs . ', interval: ' . $fpsMeterIntervalJs . '}).addTo(map);
+            }
             map.addControl(new L.Control.Fullscreen({
                 title: {
                     "false": "' . __('Fullscreen') . '",
@@ -1358,21 +1594,18 @@ class MapCore {
             }));
             map.addControl(L.control.layers(baseMaps, null, {collapsed: true}));
             map.on("baselayerchange", function(e) {
-                var v = "roadmap";
-                if (e && e.layer === hybrid) {
-                    v = "hybrid";
-                } else {
-                    if (e && e.layer === satellite) {
-                        v = "satellite";
-                    } else {
-                        if (e && e.layer === terrain) {
-                            v = "terrain";
+                if (ubMapRememberLayer) {
+                    var v = "roadmap";
+                    for (var ubMapLayerName in ubMapBaseLayers) {
+                        if (e && e.layer === ubMapBaseLayers[ubMapLayerName]) {
+                            v = ubMapLayerName;
+                            break;
                         }
                     }
-                }
-                try {
-                    localStorage.setItem(storageKey, v);
-                } catch (err) {
+                    try {
+                        localStorage.setItem(ubMapLayerStorageKey, v);
+                    } catch (err) {
+                    }
                 }
             });
             map.on("zoomend", function() {
@@ -1474,8 +1707,10 @@ class MapCore {
             var ubIcon_' . $markerId . ' = ubMapGetCachedIcon(' . $jsIconKey . ', ' . $jsIconPath . ');
             var ubMarker_' . $markerId . ' = L.marker([' . $coords . '], {icon: ubIcon_' . $markerId . '});
             ubMapAttachMarker(ubMarker_' . $markerId . ');
-            ubMarker_' . $markerId . '.bindPopup(' . $jsPopup . ', {maxWidth: 320, minWidth: 50, maxHeight: 600, closeButton: true, closeOnEscapeKey: true});
         ';
+        if (!empty($popupHtml)) {
+            $result .= 'ubMarker_' . $markerId . '.bindPopup(' . $jsPopup . ', {maxWidth: 320, minWidth: 50, maxHeight: 600, closeButton: true, closeOnEscapeKey: true});';
+        }
         if (!empty($tooltip)) {
             $result .= 'ubMarker_' . $markerId . '.bindTooltip(' . $jsTooltip . ', {sticky: true});';
         }
@@ -1483,9 +1718,19 @@ class MapCore {
     }
 
     /**
+     * Returns list of canonical icon keys currently registered
+     *
+     * @return array
+     */
+    public static function getIconKeys() {
+        $result = array_keys(self::$icons);
+        return ($result);
+    }
+
+    /**
      * Resolves icon key to icon image path
      *
-     * @param string $iconKey
+     * @param string $iconKey - canonical icon key
      *
      * @return string
      */
@@ -1518,8 +1763,8 @@ class MapCore {
     /**
      * Registers or overrides icon path by key
      *
-     * @param string $iconKey
-     * @param string $iconPath
+     * @param string $iconKey - canonical icon key
+     * @param string $iconPath - path to icon image
      *
      * @return bool
      */
