@@ -54,6 +54,13 @@ class MapCore {
     protected $extraCode = '';
 
     /**
+     * External JS files to load before the main map inline script (relative URLs)
+     *
+     * @var array
+     */
+    protected $extraScriptSrcs = array();
+
+    /**
      * Maps configuration cache
      *
      * @var array
@@ -419,6 +426,21 @@ class MapCore {
      */
     public function addRawJs($jsCode) {
         $this->extraCode .= $jsCode;
+        return ($this);
+    }
+
+    /**
+     * Registers an extra script URL to include before the main map script (deduplicated)
+     *
+     * @param string $url
+     *
+     * @return object
+     */
+    public function addScriptSrc($url) {
+        $url = (string) $url;
+        if ($url !== '' and !in_array($url, $this->extraScriptSrcs, true)) {
+            $this->extraScriptSrcs[] = $url;
+        }
         return ($this);
     }
 
@@ -842,6 +864,8 @@ class MapCore {
         $dashArray = isset($options['dashArray']) ? $options['dashArray'] : '';
         $hint = isset($options['hint']) ? $options['hint'] : '';
         $popupTitle = isset($options['popupTitle']) ? $options['popupTitle'] : '';
+        $lineId = isset($options['lineId']) ? (int) $options['lineId'] : 0;
+        $lineMeta = isset($options['meta']) ? $options['meta'] : array();
 
         $popupHtml = '';
         if (!empty($popupTitle)) {
@@ -870,6 +894,16 @@ class MapCore {
         }
         if (!empty($hint)) {
             $this->placemarks .= 'ubPolyline_' . $polylineId . '.bindTooltip(' . $this->quoteJs($hint) . ', {sticky: true});';
+        }
+        if ($lineId > 0) {
+            $this->placemarks .= 'ubPolyline_' . $polylineId . '._ubLineId = ' . $lineId . ';';
+        }
+        if (is_array($lineMeta) and !empty($lineMeta)) {
+            $lineMetaJs = json_encode($lineMeta);
+            if ($lineMetaJs === false) {
+                $lineMetaJs = '{}';
+            }
+            $this->placemarks .= 'ubPolyline_' . $polylineId . '._ubLineMeta = ' . $lineMetaJs . ';';
         }
         return ($this);
     }
@@ -1312,6 +1346,7 @@ class MapCore {
         $result = '';
         $result .= wf_tag('link', false, '', 'rel="stylesheet" href="modules/jsc/leaflet/leaflet.css"');
         $result .= wf_tag('script', false, '', 'src="modules/jsc/leaflet/leaflet.js"') . wf_tag('script', true);
+        $result .= wf_tag('script', false, '', 'src="modules/jsc/leaflet-editable/src/Leaflet.Editable.js"') . wf_tag('script', true);
         $result .= wf_tag('link', false, '', 'rel="stylesheet" href="modules/jsc/leaflet-geocoder/Control.Geocoder.css"');
         $result .= wf_tag('script', false, '', 'src="modules/jsc/leaflet-geocoder/Control.Geocoder.min.js"') . wf_tag('script', true);
         $result .= wf_tag('link', false, '', 'rel="stylesheet" href="modules/jsc/leaflet-ruler/src/leaflet-ruler.css"');
@@ -1343,6 +1378,11 @@ class MapCore {
         $fpsMeterEnabledJs = ($this->fpsMeterEnabled) ? 'true' : 'false';
         $fpsMeterIntervalJs = (int) $this->fpsMeterInterval;
         $fpsMeterPositionJs = $this->quoteJs($this->fpsMeterPosition);
+        if (!empty($this->extraScriptSrcs)) {
+            foreach ($this->extraScriptSrcs as $eachScriptSrc) {
+                $result .= wf_tag('script', false, '', 'src="' . $eachScriptSrc . '"') . wf_tag('script', true);
+            }
+        }
         $result .= wf_tag('script', false, '', 'type = "text/javascript"');
         $result .= '
             var map = L.map("' . $this->container . '", {maxZoom: 18});
