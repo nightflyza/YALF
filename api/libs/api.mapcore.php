@@ -117,6 +117,14 @@ class MapCore {
     protected $rememberLayer=false;
 
     /**
+     * When true, all marker attachments go inside a L.layerGroup on the map
+     * so callers can show/hide markers by adding/removing that group.
+     *
+     * @var bool
+     */
+    protected $markerToggleShellEnabled = false;
+
+    /**
      * Enables FPS meter overlay control
      *
      * @var bool
@@ -137,7 +145,24 @@ class MapCore {
      */
     protected $fpsMeterPosition = 'bottomleft';
 
-      /**
+    /**
+     * Per-category counters of objects added via public add* methods.
+     *
+     * @var array
+     */
+    protected $objectCounts = array(
+        'markers' => 0,
+        'dynamicMarkers' => 0,
+        'lines' => 0,
+        'polylines' => 0,
+        'circles' => 0,
+        'circleMarkers' => 0,
+        'polygons' => 0,
+        'rectangles' => 0,
+        'geoJsonLayers' => 0
+    );
+
+    /**
      * Canonical icon key => image path
      *
      * @var array
@@ -390,6 +415,33 @@ class MapCore {
     }
 
     /**
+     * When enabled, markers (cluster/canvas/plain) are parented under one
+     * L.layerGroup exposed as ubMarkerToggleShell in the rendered map script.
+     *
+     * @param bool $enabled
+     *
+     * @return object
+     */
+    public function setMarkerToggleShellEnabled($enabled = true) {
+        if ($enabled) {
+            $this->markerToggleShellEnabled = true;
+        } else {
+            $this->markerToggleShellEnabled = false;
+        }
+        return ($this);
+    }
+
+    /**
+     * Returns map container DOM id used by Leaflet
+     *
+     * @return string
+     */
+    public function getContainerId() {
+        $result = $this->container;
+        return ($result);
+    }
+
+    /**
      * Sets initial base layer type
      *
      * @param string $type - type of map (map, satellite, hybrid, terrain)
@@ -456,8 +508,19 @@ class MapCore {
         $result = array(
             'placemarks' => $this->placemarks,
             'extraCode' => $this->extraCode,
-            'usedIcons' => $this->usedIcons
+            'usedIcons' => $this->usedIcons,
+            'objectCounts' => $this->objectCounts
         );
+        return ($result);
+    }
+
+    /**
+     * Returns per-category counters of objects added via public add* methods
+     *
+     * @return array
+     */
+    public function getObjectCounts() {
+        $result = $this->objectCounts;
         return ($result);
     }
 
@@ -485,6 +548,9 @@ class MapCore {
                 $this->placemarks = '';
                 $this->extraCode = '';
                 $this->usedIcons = array();
+                foreach ($this->objectCounts as $countKey => $countVal) {
+                    $this->objectCounts[$countKey] = 0;
+                }
             }
 
             if (isset($mapObjects['placemarks'])) {
@@ -496,6 +562,17 @@ class MapCore {
             if (isset($mapObjects['usedIcons'])) {
                 if (is_array($mapObjects['usedIcons'])) {
                     $this->usedIcons = array_merge($this->usedIcons, $mapObjects['usedIcons']);
+                }
+            }
+            if (isset($mapObjects['objectCounts'])) {
+                if (is_array($mapObjects['objectCounts'])) {
+                    foreach ($mapObjects['objectCounts'] as $countKey => $countVal) {
+                        if (isset($this->objectCounts[$countKey])) {
+                            $this->objectCounts[$countKey] += (int) $countVal;
+                        } else {
+                            $this->objectCounts[$countKey] = (int) $countVal;
+                        }
+                    }
                 }
             }
         }
@@ -696,6 +773,7 @@ class MapCore {
         }
 
         $this->placemarks .= $this->buildMarkerJs($markerId, $coords, $iconKey, $iconPath, $popupHtml, $tooltip);
+        $this->objectCounts['markers']++;
 
         return ($this);
     }
@@ -760,6 +838,7 @@ class MapCore {
         if (!empty($tooltip)) {
             $this->placemarks .= 'ubMarkerDyn_' . $markerId . '.bindTooltip(' . $jsTooltip . ', {sticky: true});';
         }
+        $this->objectCounts['dynamicMarkers']++;
         return ($this);
     }
 
@@ -803,6 +882,7 @@ class MapCore {
         if (!empty($hint)) {
             $this->placemarks .= 'ubCircle_' . $circleId . '.bindTooltip(' . $jsHint . ', {sticky: true});';
         }
+        $this->objectCounts['circles']++;
         return ($this);
     }
 
@@ -837,6 +917,7 @@ class MapCore {
         if (!empty($hint)) {
             $this->placemarks .= 'ubLine_' . $lineId . '.bindTooltip(' . $this->quoteJs($hint) . ', {sticky: true});';
         }
+        $this->objectCounts['lines']++;
         return ($this);
     }
 
@@ -905,6 +986,7 @@ class MapCore {
             }
             $this->placemarks .= 'ubPolyline_' . $polylineId . '._ubLineMeta = ' . $lineMetaJs . ';';
         }
+        $this->objectCounts['polylines']++;
         return ($this);
     }
 
@@ -964,6 +1046,7 @@ class MapCore {
         if (!empty($hint)) {
             $this->placemarks .= 'ubPolygon_' . $polygonId . '.bindTooltip(' . $this->quoteJs($hint) . ', {sticky: true});';
         }
+        $this->objectCounts['polygons']++;
         return ($this);
     }
 
@@ -1023,6 +1106,7 @@ class MapCore {
         if (!empty($hint)) {
             $this->placemarks .= 'ubRect_' . $rectId . '.bindTooltip(' . $this->quoteJs($hint) . ', {sticky: true});';
         }
+        $this->objectCounts['rectangles']++;
         return ($this);
     }
 
@@ -1077,6 +1161,7 @@ class MapCore {
         if (!empty($hint)) {
             $this->placemarks .= 'ubCircleMarker_' . $circleMarkerId . '.bindTooltip(' . $this->quoteJs($hint) . ', {sticky: true});';
         }
+        $this->objectCounts['circleMarkers']++;
         return ($this);
     }
 
@@ -1287,6 +1372,7 @@ class MapCore {
         if (!empty($hint)) {
             $this->placemarks .= 'ubGeoJson_' . $layerId . '.bindTooltip(' . $this->quoteJs($hint) . ', {sticky: true});';
         }
+        $this->objectCounts['geoJsonLayers']++;
         return ($this);
     }
 
@@ -1313,6 +1399,7 @@ class MapCore {
         $rememberZoomJs = ($this->rememberZoom) ? 'true' : 'false';
         $rememberPositionJs = ($this->rememberPosition) ? 'true' : 'false';
         $rememberLayerJs = ($this->rememberLayer) ? 'true' : 'false';
+        $markerToggleShellJs = ($this->markerToggleShellEnabled) ? 'true' : 'false';
 
         if (!empty($this->tileLayer)) {
             $tileLayerOSM = $this->tileLayer;
@@ -1378,6 +1465,19 @@ class MapCore {
         $fpsMeterEnabledJs = ($this->fpsMeterEnabled) ? 'true' : 'false';
         $fpsMeterIntervalJs = (int) $this->fpsMeterInterval;
         $fpsMeterPositionJs = $this->quoteJs($this->fpsMeterPosition);
+
+        $objectCountsTotal = 0;
+        $objectCountsStr = '';
+        foreach ($this->objectCounts as $countKey => $countVal) {
+            $countVal = (int) $countVal;
+            $objectCountsTotal += $countVal;
+            if ($objectCountsStr !== '') {
+                $objectCountsStr .= ', ';
+            }
+            $objectCountsStr .= $countKey . '=' . $countVal;
+        }
+        $objectCountsSummary = 'total=' . $objectCountsTotal . ', ' . $objectCountsStr;
+        $objectCountsSummaryJs = $this->quoteJs($objectCountsSummary);
         if (!empty($this->extraScriptSrcs)) {
             foreach ($this->extraScriptSrcs as $eachScriptSrc) {
                 $result .= wf_tag('script', false, '', 'src="' . $eachScriptSrc . '"') . wf_tag('script', true);
@@ -1495,18 +1595,25 @@ class MapCore {
                     console.warn("MapCore: canvas markers and clustering are both enabled; clustering is ignored because canvas markers mode is active.");
                 }
             }
-            var ubMarkerLayer = map;
+            var ubMarkerToggleShellEnabled = ' . $markerToggleShellJs . ';
+            var ubMarkerToggleShell = null;
+            if (ubMarkerToggleShellEnabled) {
+                ubMarkerToggleShell = L.layerGroup();
+                ubMarkerToggleShell.addTo(map);
+            }
+            var ubMarkerTargetParent = ubMarkerToggleShell || map;
+            var ubMarkerLayer = ubMarkerTargetParent;
             if (ubForceCanvasMarkers) {
                 if (typeof L.MarkersCanvas === "function" && typeof RBush === "function") {
                     // Render canvas markers in markerPane to keep them above vector overlays.
                     ubMarkerLayer = new L.MarkersCanvas({pane: "markerPane"});
-                    ubMarkerLayer.addTo(map);
+                    ubMarkerLayer.addTo(ubMarkerTargetParent);
                     if (ubMarkerLayer._canvas && ubMarkerLayer._canvas.style) {
                         // Keep circles/polygons interactive under markerPane canvas layer.
                         ubMarkerLayer._canvas.style.pointerEvents = "none";
                     }
                 } else {
-                    ubMarkerLayer = map;
+                    ubMarkerLayer = ubMarkerTargetParent;
                     if (window.console && typeof console.warn === "function") {
                         console.warn("MapCore: leaflet-markers-canvas or RBush is unavailable, canvas markers disabled.");
                     }
@@ -1515,9 +1622,9 @@ class MapCore {
                 if (ubClusterEnabled) {
                     if (typeof L.markerClusterGroup === "function") {
                         ubMarkerLayer = L.markerClusterGroup(' . $clusterOptionsJs . ');
-                        map.addLayer(ubMarkerLayer);
+                        ubMarkerTargetParent.addLayer(ubMarkerLayer);
                     } else {
-                        ubMarkerLayer = map;
+                        ubMarkerLayer = ubMarkerTargetParent;
                         if (window.console && typeof console.warn === "function") {
                             console.warn("MapCore: local markercluster plugin is unavailable, clustering disabled.");
                         }
@@ -1584,6 +1691,7 @@ class MapCore {
                         ", rememberPosition=" + ubMapOptionsSnapshot.rememberPosition +
                         ", rememberLayer=" + ubMapOptionsSnapshot.rememberLayer
                     );
+                    console.info("[MapCore #' . $this->container . '] objects " + ' . $objectCountsSummaryJs . ');
                 }
             }
 
